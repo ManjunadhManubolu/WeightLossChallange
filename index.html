@@ -235,7 +235,44 @@
   .navbtn:hover:not(:disabled){background:var(--line-2);border-color:var(--muted-2)}
   .navbtn.primary{background:var(--ink);color:#fff;border-color:var(--ink)}
 
-  .day-row-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(310px,1fr));gap:14px}
+  .day-row-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(310px,1fr));gap:10px}
+  @media (max-width:760px){
+    .day-row-grid{grid-template-columns:1fr;gap:8px}
+  }
+  /* Drill-down behaviour ---------------------------------------------- */
+  .day-card .top{cursor:pointer;user-select:none;position:relative}
+  .day-card .top .caret{
+    margin-left:auto;color:var(--muted);font-size:14px;line-height:1;flex-shrink:0;
+  }
+  /* Default: hide body. Body only shown in detail view. */
+  .day-card .body{display:none;padding:14px 18px}
+  /* Detail view = the parent grid is hidden, only the active card shows full-width */
+  .day-row-grid.detail-mode .day-card{display:none}
+  .day-row-grid.detail-mode .day-card.active{
+    display:block;animation:slideDown .2s ease;
+    grid-column:1/-1;border-color:var(--accent-d);
+    box-shadow:0 0 0 2px rgba(16,185,129,.18),var(--shadow-lg);
+  }
+  .day-row-grid.detail-mode .day-card.active .body{display:block}
+  .day-row-grid.detail-mode .day-card.active .top .caret{display:none}
+  /* Back button shown only in detail mode */
+  .week-back{
+    display:none;align-items:center;gap:8px;
+    background:#fff;border:1px solid var(--line);color:var(--ink);
+    padding:9px 16px;border-radius:10px;font-weight:600;font-size:14px;cursor:pointer;
+    margin-bottom:12px;transition:all .15s ease;
+  }
+  .week-back.show{display:inline-flex}
+  .week-back:hover{background:var(--line-2);border-color:var(--muted-2)}
+  .week-back .arrow{font-size:16px;line-height:1}
+  @keyframes slideDown{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+  /* Make sure long meal text never overflows on small screens */
+  .day-card,
+  .day-card .body,
+  .day-card .meal-line .val,
+  .day-card .meal-line .val *{
+    overflow-wrap:anywhere;word-break:break-word;min-width:0;
+  }
   .day-card{
     background:#fff;border:1px solid var(--line);border-radius:var(--radius);
     overflow:hidden;box-shadow:var(--shadow-sm);transition:all .15s ease;
@@ -1357,7 +1394,8 @@ function renderWeek(){
   document.getElementById('weekMeta').textContent = `${state.weeks[fmtISO(start)] ? '✅ Uploaded' : '⚠️ Not yet uploaded'} · 7 days`;
 
   const c = document.getElementById('weekContainer');
-  let html = '<div class="day-row-grid">';
+  let html = '<button class="week-back" type="button" aria-label="Back to all days"><span class="arrow">←</span> Back to all days</button>';
+  html += '<div class="day-row-grid">';
   for (let i=0;i<7;i++){
     const d = addDays(start, i);
     const iso = fmtISO(d);
@@ -1365,15 +1403,24 @@ function renderWeek(){
     const isToday = iso === fmtISO(TODAY);
     const challengeDayNum = daysBetween(START_DATE, d) + 1;
     const dayBadge = (challengeDayNum >= 1 && challengeDayNum <= 90) ? `Day ${challengeDayNum}` : '';
-
+    // Summary kcal in collapsed header (so closed cards still show useful info)
+    let kcalChip = '';
+    if (plan){
+      const tot = fmtMacro(dayTotalMacros(plan));
+      kcalChip = `<span class="mini kcal" style="margin-left:8px">${tot.kcal} kcal</span>`;
+    }
     html += `
       <div class="day-card ${isToday?'today':''}">
-        <div class="top">
-          <div>
-            <div class="day">${dayName(d)}</div>
-            <div class="date">${shortMonth(d)}, ${d.getFullYear()}</div>
+        <div class="top" data-toggle="day">
+          <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0">
+            <div style="min-width:0">
+              <div class="day">${dayName(d)}</div>
+              <div class="date">${shortMonth(d)}, ${d.getFullYear()}</div>
+            </div>
+            ${kcalChip}
           </div>
           ${isToday ? '<span class="badge-today">TODAY</span>' : (dayBadge ? `<span class="day-num-mini">${dayBadge}</span>` : '')}
+          <span class="caret">▶</span>
         </div>
         <div class="body">
           ${plan ? renderMealLines(plan) : '<p style="color:var(--muted);font-size:13.5px;margin:8px 0;text-align:center">No plan for this day yet.</p>'}
@@ -1382,6 +1429,29 @@ function renderWeek(){
   }
   html += '</div>';
   c.innerHTML = html;
+  // Drill-down behaviour: tap a day -> that day takes over the page. Tap "Back" to return.
+  const grid = c.querySelector('.day-row-grid');
+  const backBtn = c.querySelector('.week-back');
+  function exitDetail(){
+    grid.classList.remove('detail-mode');
+    grid.querySelectorAll('.day-card.active').forEach(el => el.classList.remove('active'));
+    backBtn.classList.remove('show');
+    window.scrollTo({top:0, behavior:'smooth'});
+  }
+  c.querySelectorAll('.day-card .top[data-toggle="day"]').forEach(t => {
+    t.addEventListener('click', () => {
+      const card = t.parentElement;
+      grid.querySelectorAll('.day-card.active').forEach(el => el.classList.remove('active'));
+      card.classList.add('active');
+      grid.classList.add('detail-mode');
+      backBtn.classList.add('show');
+      window.scrollTo({top:0, behavior:'smooth'});
+    });
+  });
+  backBtn.addEventListener('click', exitDetail);
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && grid.classList.contains('detail-mode')) exitDetail();
+  });
 }
 
 function renderMealLines(plan){
@@ -1454,15 +1524,52 @@ function renderAllWeeks(){
 function renderWeekDays(wk){
   const days = wk.days || [];
   if (!days.length) return '<p style="color:var(--muted)">No days in this week.</p>';
-  return '<div class="day-row-grid">' + days.map(d => {
+  const html = '<button class="week-back" type="button"><span class="arrow">←</span> Back to all days</button><div class="day-row-grid">' + days.map(d => {
     const dt = parseISO(d.date);
+    const tot = fmtMacro(dayTotalMacros(d));
     return `<div class="day-card">
-      <div class="top">
-        <div><div class="day">${d.day || dayName(dt)}</div><div class="date">${shortMonth(dt)}, ${dt.getFullYear()}</div></div>
+      <div class="top" data-toggle="day">
+        <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0">
+          <div style="min-width:0">
+            <div class="day">${d.day || dayName(dt)}</div>
+            <div class="date">${shortMonth(dt)}, ${dt.getFullYear()}</div>
+          </div>
+          <span class="mini kcal" style="margin-left:8px">${tot.kcal} kcal</span>
+        </div>
+        <span class="caret">▶</span>
       </div>
       <div class="body">${renderMealLines(d)}</div>
     </div>`;
   }).join('') + '</div>';
+  // Bind handlers after the parent week-tile injects this — handled in renderAllWeeks too,
+  // but a microtask ensures listeners attach for the dynamic content.
+  setTimeout(() => {
+    document.querySelectorAll('.expanded-content .day-row-grid').forEach(grid => {
+      if (grid.dataset.bound) return;
+      grid.dataset.bound = '1';
+      const backBtn = grid.previousElementSibling && grid.previousElementSibling.classList.contains('week-back')
+        ? grid.previousElementSibling : null;
+      grid.querySelectorAll('.day-card .top[data-toggle="day"]').forEach(t => {
+        t.addEventListener('click', e => {
+          e.stopPropagation();
+          const card = t.parentElement;
+          grid.querySelectorAll('.day-card.active').forEach(el => el.classList.remove('active'));
+          card.classList.add('active');
+          grid.classList.add('detail-mode');
+          if (backBtn) backBtn.classList.add('show');
+        });
+      });
+      if (backBtn){
+        backBtn.addEventListener('click', e => {
+          e.stopPropagation();
+          grid.classList.remove('detail-mode');
+          grid.querySelectorAll('.day-card.active').forEach(el => el.classList.remove('active'));
+          backBtn.classList.remove('show');
+        });
+      }
+    });
+  }, 0);
+  return html;
 }
 
 /* ---------- GROCERIES ---------- */
