@@ -53,6 +53,21 @@
   }
   .icon-btn:hover{background:var(--line-2);border-color:var(--muted-2)}
 
+  /* Sign-in / sync chip */
+  .auth-chip{
+    display:inline-flex;align-items:center;gap:8px;
+    border:1px solid var(--line);background:#fff;color:var(--ink);
+    height:36px;padding:0 12px;border-radius:10px;cursor:pointer;
+    font-size:13px;font-weight:600;transition:all .15s ease;
+    font-family:inherit;
+  }
+  .auth-chip:hover{background:var(--line-2);border-color:var(--muted-2)}
+  .auth-chip img{display:block;background:var(--line-2)}
+  .auth-chip .auth-status{font-size:10px;line-height:1}
+  .auth-chip.syncing .auth-status{color:var(--warm)}
+  .auth-chip.synced .auth-status{color:var(--accent-d)}
+  .auth-chip.offline .auth-status{color:var(--muted-2)}
+
   .hero{
     position:relative;overflow:hidden;
     background:
@@ -755,6 +770,11 @@
       <span style="color:var(--muted);font-weight:500">Irving, TX</span>
     </div>
     <div class="top-actions">
+      <button class="auth-chip offline" id="authBtn" title="Sign in to sync across devices">
+        <span id="authIcon">☁️</span>
+        <span id="authLabel">Sign in</span>
+        <span class="auth-status" id="authStatus"></span>
+      </button>
       <button class="icon-btn" id="topUpload" title="Upload trainer's plan">📤</button>
       <button class="icon-btn" id="topPrint" title="Print">🖨️</button>
     </div>
@@ -1152,6 +1172,192 @@ function makeSunday(){
   };
 }
 
+/* ---------- WEEK 3 (Jun 22 – Jun 28) — from latest Diet chart ---------- */
+function makeMondayW3(){
+  return {
+    preWorkout:  [
+      {q:'10',          name:'Badam',                src:SRC_DIET},
+      {q:'2',           name:'Walnuts',              src:SRC_DIET}
+    ],
+    postWorkout: [
+      {q:'1 scoop',     name:'Protein Shake',        src:SRC_REC},
+      {q:'1 medium',    name:'Guava',                src:SRC_DIET}
+    ],
+    brunchLunch: [
+      {q:'3',           name:'Whole Eggs',           src:SRC_DIET},
+      {q:'½ cup',       name:'Brown Rice',           src:SRC_SERV},
+      {q:'1 bowl',      name:'Mixed Veg Sambar',     src:SRC_DIET},
+      {q:'1 bowl',      name:'Salad',                src:SRC_DIET}
+    ],
+    dinner: [
+      {q:'120g',        name:'Grilled Chicken',      src:SRC_DIET},
+      {q:'1 bowl',      name:'Stir-fried Vegetables',src:SRC_DIET}
+    ],
+    snacks: [
+      {q:'150-200g',    name:'Greek Yogut',          src:SRC_SERV},
+      {q:'~75g',        name:'Berries',              src:SRC_DIET}
+    ]
+  };
+}
+function makeTuesdayW3(){
+  return {
+    preWorkout:  [
+      {q:'1 tbsp',      name:'Pumpkin Seeds',        src:SRC_DIET},
+      {q:'1 tbsp',      name:'Sunflower Seeds',      src:SRC_DIET}
+    ],
+    postWorkout: [
+      {q:'1 scoop',     name:'Protein Shake',        src:SRC_REC},
+      {q:'1 medium',    name:'Apple',                src:SRC_DIET}
+    ],
+    brunchLunch: [
+      {q:'2',           name:'Whole Eggs',           src:SRC_DIET},
+      {q:'¾ cup',       name:'Quinoa',               src:SRC_SERV},
+      {q:'1 bowl',      name:'Rajma Curry',          src:SRC_DIET},
+      {q:'1 bowl',      name:'Salad',                src:SRC_DIET}
+    ],
+    dinner: [
+      {q:'100g',        name:'Paneer Bhurji',        src:SRC_DIET},
+      {q:'1 bowl',      name:'Vegetable Stir Fry',   src:SRC_DIET}
+    ],
+    snacks: [
+      {q:'~30g',        name:'Roasted Chana',        src:SRC_DIET},
+      {q:'1 glass',     name:'Buttermilk',           src:SRC_DIET}
+    ]
+  };
+}
+function makeWednesdayW3(){
+  return {
+    preWorkout:  [
+      {q:'5',           name:'Pista',                src:SRC_DIET},
+      {q:'1',           name:'Anjeer',               src:SRC_DIET}
+    ],
+    postWorkout: [
+      {q:'1 scoop',     name:'Protein Shake',        src:SRC_REC},
+      {q:'~150g',       name:'Papaya',               src:SRC_DIET}
+    ],
+    brunchLunch: [
+      {q:'3',           name:'Whole Eggs',           src:SRC_DIET},
+      {q:'1-2',         name:'Millet Dosa',          src:SRC_DIET},
+      {q:'2 tbsp',      name:'Vegetable Chutney',    src:SRC_DIET},
+      {q:'1 bowl',      name:'Salad',                src:SRC_DIET}
+    ],
+    dinner: [
+      {q:'75g dry',     name:'Soya Chunks',          src:SRC_DIET},
+      {q:'1 bowl',      name:'Veggies',              src:SRC_DIET}
+    ],
+    snacks: [
+      {q:'150-200g',    name:'Greek Yogut',          src:SRC_SERV},
+      {q:'¼ tsp',       name:'Cinamon',              src:SRC_DIET}
+    ]
+  };
+}
+function makeThursdayW3(){
+  return {
+    preWorkout:  [
+      {q:'1 small slice', name:'Coconut',            src:SRC_DIET},
+      {q:'1 tsp',       name:'Flax Seeds',           src:SRC_DIET},
+      {q:'5',           name:'Badam',                src:SRC_DIET}
+    ],
+    postWorkout: [
+      {q:'1 scoop',     name:'Protein Shake',        src:SRC_REC},
+      {q:'½ medium',    name:'Pomegranate',          src:SRC_DIET}
+    ],
+    brunchLunch: [
+      {q:'2',           name:'Whole Eggs',           src:SRC_DIET},
+      {q:'2',           name:'All Dals Pesarattu',   src:SRC_DIET},
+      {q:'2 tbsp',      name:'Peanut Chutney',       src:SRC_DIET},
+      {q:'1 bowl',      name:'Salad',                src:SRC_DIET}
+    ],
+    dinner: [
+      {q:'120g',        name:'Chicken Breast',       src:SRC_DIET},
+      {q:'1 medium',    name:'Sweet Potato',         src:SRC_DIET},
+      {q:'1 bowl',      name:'Salad',                src:SRC_DIET}
+    ],
+    snacks: [
+      {q:'1 medium',    name:'Apple',                src:SRC_DIET},
+      {q:'150-200g',    name:'Greek Yogut',          src:SRC_SERV}
+    ]
+  };
+}
+function makeFridayW3(){
+  return {
+    preWorkout:  [
+      {q:'1-2 tbsp',    name:'Chia Seeds + Greek Yogut — soaked overnight', src:SRC_DIET}
+    ],
+    postWorkout: [
+      {q:'1 scoop',     name:'Protein Shake',        src:SRC_REC},
+      {q:'1 medium',    name:'Banana',               src:SRC_DIET}
+    ],
+    brunchLunch: [
+      {q:'3',           name:'Whole Eggs',           src:SRC_DIET},
+      {q:'2',           name:'Chapati',              src:SRC_DIET},
+      {q:'1 bowl',      name:'Mixed Veg Curry',      src:SRC_DIET},
+      {q:'1 bowl',      name:'Salad',                src:SRC_DIET}
+    ],
+    dinner: [
+      {q:'150g',        name:'Panner',               src:SRC_DIET},
+      {q:'or 165-200g', name:'Tofu (alternate)',     src:SRC_SERV},
+      {q:'1 bowl',      name:'Vegetable Soup',       src:SRC_DIET},
+      {q:'1 bowl',      name:'Salad',                src:SRC_DIET}
+    ],
+    snacks: [
+      {q:'1 medium',    name:'Guava',                src:SRC_DIET},
+      {q:'1 tbsp',      name:'Roasted Peanuts',      src:SRC_DIET}
+    ]
+  };
+}
+function makeSaturdayW3(){
+  return {
+    preWorkout:  [
+      {q:'1',           name:'Brazil nut',           src:SRC_DIET},
+      {q:'1 tsp',       name:'Mixed Seeds',          src:SRC_DIET}
+    ],
+    postWorkout: [
+      {q:'1 scoop',     name:'Protein Shake',        src:SRC_REC},
+      {q:'1 medium',    name:'Apple',                src:SRC_DIET}
+    ],
+    brunchLunch: [
+      {q:'2',           name:'Whole Eggs',           src:SRC_DIET},
+      {q:'½ cup',       name:'Brown Rice',           src:SRC_SERV},
+      {q:'1 bowl',      name:'Fish Curry or Chicken Curry', src:SRC_DIET},
+      {q:'1 bowl',      name:'Salad',                src:SRC_DIET}
+    ],
+    dinner: [
+      {q:'1 bowl',      name:'Soya Chunks Pulao',    src:SRC_DIET},
+      {q:'1 bowl',      name:'Vegetable Raita (with Greek Yogut)', src:SRC_DIET}
+    ],
+    snacks: [
+      {q:'1 bowl',      name:'Soup — Tomato or Mushroom', src:SRC_DIET}
+    ]
+  };
+}
+function makeSundayW3(){
+  return {
+    preWorkout:  [
+      {q:'¼',           name:'Avacado',              src:SRC_DIET},
+      {q:'1 tsp',       name:'Mixed Seeds',          src:SRC_DIET}
+    ],
+    postWorkout: [
+      {q:'1 scoop',     name:'Protein Shake',        src:SRC_REC},
+      {q:'½ medium',    name:'Pomegranate',          src:SRC_DIET}
+    ],
+    brunchLunch: [
+      {q:'3',           name:'Whole Eggs',           src:SRC_DIET},
+      {q:'1',           name:'Adai',                 src:SRC_DIET},
+      {q:'2 tbsp',      name:'Vegetable Chutney',    src:SRC_DIET},
+      {q:'1 bowl',      name:'Salad',                src:SRC_DIET}
+    ],
+    dinner: [
+      {q:'100g',        name:'Panner',               src:SRC_DIET},
+      {q:'1 bowl',      name:'Corn & Vegetable Salad', src:SRC_DIET},
+      {q:'150-200g',    name:'Greek Yogut',          src:SRC_SERV}
+    ],
+    snacks: [
+      {q:'~75g',        name:'Berries',              src:SRC_DIET}
+    ]
+  };
+}
+
 /* ---------- STATE ---------- */
 /* Build SEED_DATA NOW that all make*() and SALAD_NOTE constants are in scope */
 SEED_DATA = {
@@ -1167,6 +1373,19 @@ SEED_DATA = {
     ],
     uploadedAt: new Date().toISOString(),
     sourceFile: 'Pre-seeded sample (week of Jun 8)'
+  },
+  '2026-06-22': {
+    days: [
+      { date:'2026-06-22', day:'Monday',    items: makeMondayW3() },
+      { date:'2026-06-23', day:'Tuesday',   items: makeTuesdayW3() },
+      { date:'2026-06-24', day:'Wednesday', items: makeWednesdayW3() },
+      { date:'2026-06-25', day:'Thursday',  items: makeThursdayW3() },
+      { date:'2026-06-26', day:'Friday',    items: makeFridayW3() },
+      { date:'2026-06-27', day:'Saturday',  items: makeSaturdayW3() },
+      { date:'2026-06-28', day:'Sunday',    items: makeSundayW3() }
+    ],
+    uploadedAt: new Date().toISOString(),
+    sourceFile: 'Personalized Diet Chart - Manjunath.xlsx (week of Jun 22)'
   }
 };
 
@@ -1283,7 +1502,32 @@ const FOOD_DB = {
 
   /* misc */
   'cinnamon':          { unit:'tsp',   macros: N(6, 0.1, 2, 0) },
-  'cinamon':           { unit:'tsp',   macros: N(6, 0.1, 2, 0) }
+  'cinamon':           { unit:'tsp',   macros: N(6, 0.1, 2, 0) },
+
+  /* week-3 additions */
+  'stir-fried vegetables':{ unit:'bowl', macros: N(120, 4, 14, 6) },
+  'vegetable stir fry':{ unit:'bowl',  macros: N(120, 4, 14, 6) },
+  'rajma curry':       { unit:'bowl',  macros: N(180, 9, 28, 4) },
+  'paneer bhurji':     { unit:'g100',  macros: N(220, 16, 4, 16) },
+  'roasted chana':     { unit:'g100',  macros: N(370, 22, 55, 5) },
+  'buttermilk':        { unit:'bowl',  macros: N(40, 3, 5, 1) },
+  'fish curry':        { unit:'bowl',  macros: N(220, 22, 6, 12) },
+  'chicken curry':     { unit:'bowl',  macros: N(240, 22, 6, 14) },
+  'fish curry or chicken curry':{ unit:'bowl', macros: N(230, 22, 6, 13) },
+  'soya chunks pulao': { unit:'bowl',  macros: N(280, 16, 38, 7) },
+  'vegetable raita':   { unit:'bowl',  macros: N(90, 6, 8, 3) },
+  'vegetable raita (with greek yogut)':{ unit:'bowl', macros: N(90, 6, 8, 3) },
+  'adai':              { unit:'piece', macros: N(180, 9, 24, 5) },
+  'mixed veg curry':   { unit:'bowl',  macros: N(150, 4, 18, 7) },
+  'peanut chutney':    { unit:'tbsp',  macros: N(45, 2, 2, 3.5) },
+  'roasted peanuts':   { unit:'tbsp',  macros: N(80, 3.5, 3, 7) },
+  'veggies':           { unit:'bowl',  macros: N(80, 3, 14, 1.5) },
+  'corn & vegetable salad':{ unit:'bowl', macros: N(140, 5, 24, 2) },
+  'corn and vegetable salad':{ unit:'bowl', macros: N(140, 5, 24, 2) },
+  'vegetable soup':    { unit:'bowl',  macros: N(90, 4, 12, 2.5) },
+  'soup — tomato or mushroom':{ unit:'bowl', macros: N(90, 4, 12, 2.5) },
+  'tomato soup':       { unit:'bowl',  macros: N(90, 4, 12, 2.5) },
+  'mushroom soup':     { unit:'bowl',  macros: N(90, 4, 12, 2.5) }
 };
 
 function lookupFood(name){
@@ -1957,6 +2201,24 @@ const GROCERY_DB = {
 
   /* Spices */
   'Cinnamon':                { cat:'Spices',     qty:'2 oz jar',          store:'Walmart',                  price:3.00 },
+
+  /* Week-3 additions */
+  'Stir-fried Vegetables':   { cat:'Vegetables', qty:'broccoli + bell pepper + zucchini (~1 lb)', store:'Walmart', price:6.00 },
+  'Rajma Curry':             { cat:'Pulses',     qty:'1 lb dry rajma',    store:'Patel Brothers',           price:3.50 },
+  'Paneer Bhurji':           { cat:'Dairy',      qty:'12 oz paneer block',store:'Patel Brothers',           price:6.00 },
+  'Roasted Chana':           { cat:'Protein',    qty:'10 oz pack',        store:'Patel Brothers',           price:3.00 },
+  'Buttermilk':              { cat:'Dairy',      qty:'1 qt carton',       store:'Patel / Walmart',          price:3.00 },
+  'Fish Curry or Chicken Curry':{ cat:'Protein', qty:'1 lb tilapia or chicken', store:'Costco / Patel',     price:7.00 },
+  'Soya Chunks Pulao':       { cat:'Protein',    qty:'(uses soya chunks + rice — already on list)', store:'—', price:0, skip:true },
+  'Vegetable Raita (with Greek Yogut)':{ cat:'Dairy', qty:'(uses Greek yogut — already on list)', store:'—', price:0, skip:true },
+  'Adai':                    { cat:'Grains',     qty:'mixed dal flour 1 lb', store:'Patel Brothers',        price:4.00 },
+  'Mixed Veg Curry':         { cat:'Vegetables', qty:'frozen mixed veg 1 lb', store:'Walmart',              price:4.00 },
+  'Peanut Chutney':           { cat:'Other',      qty:'(uses peanuts — already on list)', store:'—',        price:0, skip:true },
+  'Roasted Peanuts':         { cat:'Nuts',       qty:'8 oz pack',         store:'Walmart / Patel',          price:3.00 },
+  'Veggies':                 { cat:'Vegetables', qty:'(generic mixed veg — already covered)', store:'—',    price:0, skip:true },
+  'Corn & Vegetable Salad':  { cat:'Vegetables', qty:'sweet corn + bell pepper + onion + cilantro', store:'Walmart', price:5.00 },
+  'Vegetable Soup':          { cat:'Vegetables', qty:'mixed soup veg',    store:'Walmart',                  price:4.00 },
+  'Soup — Tomato or Mushroom':{ cat:'Vegetables', qty:'1 lb tomato or 8oz mushrooms', store:'Walmart',      price:4.00 }
 };
 
 function lookupGrocery(name){
@@ -2925,6 +3187,235 @@ renderAll();
 scheduleMidnightRefresh();
 /* Re-check on tab focus too (handles laptop sleep across days) */
 document.addEventListener('visibilitychange', () => { if (!document.hidden) renderAll(); });
+
+/* =====================================================================
+   FIREBASE CLOUD SYNC HOOKS
+   Bridges the classic script above with the ES-module script below.
+   The module script (added at the bottom) attaches itself to
+   window.cloudSync = { signIn, signOut, status }.
+   ===================================================================== */
+
+/* Replace the persistence functions so any state change pushes to cloud too */
+const _origSaveState = saveState;
+window.saveState = function(s){
+  _origSaveState(s);
+  if (window.cloudSync && window.cloudSync.user){
+    window.cloudSync.pushState(s);
+  }
+};
+const _origSaveWater = saveWater;
+window.saveWater = function(d){
+  _origSaveWater(d);
+  if (window.cloudSync && window.cloudSync.user){
+    window.cloudSync.pushWater(d);
+  }
+};
+const _origSaveGoal = saveGoal;
+window.saveGoal = function(g){
+  _origSaveGoal(g);
+  if (window.cloudSync && window.cloudSync.user){
+    window.cloudSync.pushGoal(g);
+  }
+};
+
+/* Called by cloud module when remote data arrives */
+window.applyRemoteState = function(remote){
+  if (remote && remote.weeks){
+    state = remote;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    renderAll();
+  }
+};
+window.applyRemoteWater = function(remote){
+  if (remote && typeof remote === 'object'){
+    localStorage.setItem(WATER_KEY, JSON.stringify(remote));
+    if (document.querySelector('.tabbtn[data-tab=water].active')) renderWater();
+  }
+};
+window.applyRemoteGoal = function(remote){
+  if (remote && typeof remote === 'object'){
+    localStorage.setItem(GOAL_KEY, JSON.stringify(remote));
+    if (document.querySelector('.tabbtn[data-tab=goal].active')) renderGoal();
+  }
+};
+window.getLocalSnapshots = function(){
+  return {
+    state: state,
+    water: (() => { try { return JSON.parse(localStorage.getItem(WATER_KEY)) || {}; } catch(e){ return {}; } })(),
+    goal:  (() => { try { return JSON.parse(localStorage.getItem(GOAL_KEY)) || null; } catch(e){ return null; } })()
+  };
+};
+</script>
+
+<!-- Firebase Auth + Firestore sync (must be type=module) -->
+<script type="module">
+  import { initializeApp }    from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
+  import {
+    getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect,
+    getRedirectResult, onAuthStateChanged, signOut
+  } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
+  import {
+    getFirestore, doc, setDoc, onSnapshot
+  } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyDBhSRDpGM5fOvEI8TVXIVbAzURDENbocY",
+    authDomain: "weightloss-92b28.firebaseapp.com",
+    projectId: "weightloss-92b28",
+    storageBucket: "weightloss-92b28.firebasestorage.app",
+    messagingSenderId: "583458313972",
+    appId: "1:583458313972:web:4ee3c662017a8d31d6b0a1",
+    measurementId: "G-2XZ3R31MB5"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+  const provider = new GoogleAuthProvider();
+
+  const authBtn    = document.getElementById('authBtn');
+  const authIcon   = document.getElementById('authIcon');
+  const authLabel  = document.getElementById('authLabel');
+  const authStatus = document.getElementById('authStatus');
+
+  function setChip(state, label, status){
+    authBtn.classList.remove('offline','syncing','synced');
+    authBtn.classList.add(state);
+    authLabel.textContent = label;
+    authStatus.textContent = status || '';
+  }
+  setChip('offline','Sign in','Local only');
+
+  // Where each device's data lives — keyed by Google UID.
+  // Subdocs: plan / water / goal. Last-write-wins (good enough for personal use).
+  function userDocs(uid){
+    return {
+      plan:  doc(db, 'users', uid, 'data', 'plan'),
+      water: doc(db, 'users', uid, 'data', 'water'),
+      goal:  doc(db, 'users', uid, 'data', 'goal')
+    };
+  }
+
+  let unsubs = [];
+  let suppressPush = false;        // don't re-push when remote pushes into us
+  let pendingTimers = {};          // debounce per kind
+  function debouncedPush(kind, ref, payload){
+    clearTimeout(pendingTimers[kind]);
+    setChip('syncing', authLabel.textContent.startsWith('Sign')?'Syncing':authLabel.textContent, 'Saving…');
+    pendingTimers[kind] = setTimeout(async () => {
+      try {
+        await setDoc(ref, { data: payload, updatedAt: Date.now() });
+        setChip('synced', authLabel.textContent, 'Synced');
+      } catch (err){
+        console.error('cloud save failed', err);
+        setChip('offline', authLabel.textContent, 'Save failed');
+      }
+    }, 600);
+  }
+
+  window.cloudSync = {
+    user: null,
+    pushState: (s) => {
+      if (suppressPush || !window.cloudSync.user) return;
+      const refs = userDocs(window.cloudSync.user.uid);
+      debouncedPush('plan', refs.plan, s);
+    },
+    pushWater: (d) => {
+      if (suppressPush || !window.cloudSync.user) return;
+      const refs = userDocs(window.cloudSync.user.uid);
+      debouncedPush('water', refs.water, d);
+    },
+    pushGoal: (g) => {
+      if (suppressPush || !window.cloudSync.user) return;
+      const refs = userDocs(window.cloudSync.user.uid);
+      debouncedPush('goal', refs.goal, g);
+    }
+  };
+
+  function attachListeners(uid){
+    detachListeners();
+    const refs = userDocs(uid);
+    unsubs.push(onSnapshot(refs.plan, snap => {
+      if (!snap.exists()) {
+        // First time on this account — seed the cloud with whatever's local
+        const local = window.getLocalSnapshots();
+        suppressPush = true; window.cloudSync.pushState(local.state); suppressPush = false;
+        return;
+      }
+      suppressPush = true;
+      window.applyRemoteState(snap.data().data);
+      suppressPush = false;
+    }, err => console.error('plan listen', err)));
+
+    unsubs.push(onSnapshot(refs.water, snap => {
+      if (!snap.exists()) {
+        const local = window.getLocalSnapshots();
+        suppressPush = true; window.cloudSync.pushWater(local.water); suppressPush = false;
+        return;
+      }
+      suppressPush = true;
+      window.applyRemoteWater(snap.data().data);
+      suppressPush = false;
+    }, err => console.error('water listen', err)));
+
+    unsubs.push(onSnapshot(refs.goal, snap => {
+      if (!snap.exists()) {
+        const local = window.getLocalSnapshots();
+        if (local.goal) { suppressPush = true; window.cloudSync.pushGoal(local.goal); suppressPush = false; }
+        return;
+      }
+      suppressPush = true;
+      window.applyRemoteGoal(snap.data().data);
+      suppressPush = false;
+    }, err => console.error('goal listen', err)));
+  }
+  function detachListeners(){
+    unsubs.forEach(u => { try { u(); } catch(e){} });
+    unsubs = [];
+  }
+
+  // Handle the redirect-style sign-in result (mobile / popup-blocked path)
+  getRedirectResult(auth).catch(err => {
+    if (err && err.code !== 'auth/no-auth-event'){
+      console.warn('redirect result', err);
+    }
+  });
+
+  onAuthStateChanged(auth, user => {
+    if (user){
+      window.cloudSync.user = user;
+      const first = (user.displayName || user.email || 'You').split(' ')[0];
+      setChip('synced', first, 'Synced');
+      authIcon.textContent = '☁️';
+      attachListeners(user.uid);
+    } else {
+      window.cloudSync.user = null;
+      detachListeners();
+      setChip('offline','Sign in','Local only');
+      authIcon.textContent = '☁️';
+    }
+  });
+
+  authBtn.addEventListener('click', async () => {
+    if (auth.currentUser){
+      if (confirm('Sign out? Your data stays in the cloud and will reload when you sign back in.')){
+        await signOut(auth);
+      }
+      return;
+    }
+    setChip('syncing','Signing in…','');
+    try {
+      await signInWithPopup(auth, provider);
+    } catch (err){
+      // popup blocked (Safari/mobile) — fall back to redirect
+      if (err && (err.code === 'auth/popup-blocked' || err.code === 'auth/popup-closed-by-user' || err.code === 'auth/operation-not-supported-in-this-environment')){
+        try { await signInWithRedirect(auth, provider); return; }
+        catch(e2){ console.error('redirect signin failed', e2); }
+      }
+      console.error('signin failed', err);
+      setChip('offline','Sign in', err.code === 'auth/unauthorized-domain' ? 'Add domain in Firebase' : 'Sign-in failed');
+    }
+  });
 </script>
 
 </body>
