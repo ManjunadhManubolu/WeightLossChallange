@@ -4,7 +4,6 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>90-Day Food Challenge — Manjunath</title>
-<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.mini.min.js"></script>
 <style>
   :root{
     --ink:#0B1023;
@@ -1224,7 +1223,6 @@
         <span id="authLabel">Sign in</span>
         <span class="auth-status" id="authStatus"></span>
       </button>
-      <button class="icon-btn" id="topUpload" title="Upload trainer's plan">📤</button>
       <button class="icon-btn" id="topPrint" title="Print">🖨️</button>
     </div>
   </div>
@@ -1287,7 +1285,6 @@
       <button class="tabbtn" data-tab="water"><span class="ic">💧</span> Water</button>
       <button class="tabbtn" data-tab="goal"><span class="ic">🎯</span> Goal</button>
       <button class="tabbtn" data-tab="grocery"><span class="ic">🛒</span> Groceries</button>
-      <button class="tabbtn" data-tab="upload"><span class="ic">📤</span> Upload</button>
     </div>
   </div>
 </div>
@@ -1324,39 +1321,6 @@
     <div id="groceryContainer"></div>
   </section>
 
-  <section class="panel" id="tab-upload">
-    <h2 class="sec">Upload your trainer's weekly plan</h2>
-    <p class="subhead">Drop in the Excel/CSV file your trainer sends — it'll be parsed automatically and slotted into the right week based on the dates inside.</p>
-
-    <div class="upload-zone" id="dropzone">
-      <div class="icon">📤</div>
-      <h3>Click or drop file to upload</h3>
-      <p>Supports <strong>.xlsx</strong>, <strong>.xls</strong>, and <strong>.csv</strong></p>
-      <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" />
-      <div class="upload-feedback" id="uploadFeedback"></div>
-    </div>
-
-    <div class="info-box">
-      <h4>📋 Expected file format</h4>
-      <p>Header row with these columns (case-insensitive, fuzzy-matched):</p>
-      <ul>
-        <li><code>Date</code> — any standard date format</li>
-        <li><code>Day</code> — Monday/Tuesday/etc. (optional, derived from date)</li>
-        <li><code>Pre Workout Meal</code> · <code>Post Workout Meal</code></li>
-        <li><code>Brunch / Lunch</code> · <code>Dinner</code> · <code>Snacks</code></li>
-      </ul>
-      <p style="margin-top:8px">First sheet of the workbook is read. Weeks are auto-detected from dates. Existing weeks are replaced when you re-upload.</p>
-    </div>
-
-    <h3 style="margin-top:24px;font-size:15px;font-weight:700">Manage data</h3>
-    <div class="actions">
-      <button class="btn" id="exportBtn">⬇️ Export JSON backup</button>
-      <button class="btn" id="importJsonBtn">⬆️ Import JSON</button>
-      <input type="file" id="importJsonInput" accept=".json" style="display:none" />
-      <button class="btn danger" id="resetBtn">🗑️ Reset all data</button>
-    </div>
-    <p class="subhead" style="font-size:12.5px;margin-top:6px">Data is stored in browser <code>localStorage</code>. Clearing browser data resets everything — back up periodically.</p>
-  </section>
 
 </main>
 
@@ -2377,7 +2341,6 @@ buttons.forEach(b => b.addEventListener('click', () => {
   if (b.dataset.tab === 'water')    renderWater();
   if (b.dataset.tab === 'goal')     renderGoal();
 }));
-document.getElementById('topUpload').onclick = () => document.querySelector('.tabbtn[data-tab=upload]').click();
 document.getElementById('topPrint').onclick = () => window.print();
 
 function renderHeader(){
@@ -3298,176 +3261,6 @@ function renderGroceries(){
 function categoryEmoji(cat){
   return {Nuts:'🥜',Fruits:'🍎',Vegetables:'🥬',Dairy:'🥚',Protein:'🍗',Grains:'🌾',Pulses:'🫘',Spices:'🌿',Other:'🥥'}[cat] || '🛒';
 }
-
-/* =====================================================================
-   UPLOAD HANDLING
-   ===================================================================== */
-const dropzone = document.getElementById('dropzone');
-const fileInput = document.getElementById('fileInput');
-const feedback = document.getElementById('uploadFeedback');
-
-dropzone.addEventListener('click', () => fileInput.click());
-dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('dragover'); });
-dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
-dropzone.addEventListener('drop', e => { e.preventDefault(); dropzone.classList.remove('dragover');
-  if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]); });
-fileInput.addEventListener('change', e => { if (e.target.files.length) handleFile(e.target.files[0]); });
-
-function setFeedback(msg, type){ feedback.textContent = msg; feedback.className = 'upload-feedback ' + type; }
-
-function handleFile(file){
-  const name = (file.name || '').toLowerCase();
-  setFeedback('Reading ' + file.name + '…', 'success');
-  const reader = new FileReader();
-  if (name.endsWith('.csv')){
-    reader.onload = e => { try { parseCSVText(e.target.result, file.name); } catch(err){ setFeedback('Could not parse CSV: ' + err.message, 'error'); } };
-    reader.readAsText(file);
-  } else {
-    reader.onload = e => {
-      try {
-        if (typeof XLSX === 'undefined'){ setFeedback('Excel parser not loaded — save as CSV and retry.', 'error'); return; }
-        const data = new Uint8Array(e.target.result);
-        const wb = XLSX.read(data, { type:'array', cellDates:true });
-        parseWorkbook(wb, file.name);
-      } catch(err){ setFeedback('Could not parse Excel: ' + err.message, 'error'); }
-    };
-    reader.readAsArrayBuffer(file);
-  }
-}
-function pickSheet(wb){
-  for (const name of wb.SheetNames){
-    const ws = wb.Sheets[name];
-    const rows = XLSX.utils.sheet_to_json(ws, { header:1, raw:false, defval:'' });
-    if (!rows.length) continue;
-    const headers = (rows[0]||[]).map(h => (h||'').toString().toLowerCase());
-    if (headers.some(h => h.includes('date'))) return { name, rows };
-  }
-  const name = wb.SheetNames[0];
-  const ws = wb.Sheets[name];
-  const rows = XLSX.utils.sheet_to_json(ws, { header:1, raw:false, defval:'' });
-  return { name, rows };
-}
-function parseWorkbook(wb, filename){
-  const { name, rows } = pickSheet(wb);
-  if (!rows || rows.length < 2){ setFeedback(`Sheet "${name}" looks empty.`, 'error'); return; }
-  ingestRows(rows, filename + ' · sheet "' + name + '"');
-}
-function parseCSVText(txt, filename){
-  const rows = []; let cur=[],field='',inQ=false;
-  for (let i=0;i<txt.length;i++){ const ch=txt[i];
-    if (inQ){ if (ch==='"' && txt[i+1]==='"'){field+='"';i++;} else if (ch==='"'){inQ=false;} else field+=ch; }
-    else { if (ch==='"'){inQ=true;} else if (ch===','){cur.push(field);field='';} else if (ch==='\n'){cur.push(field);rows.push(cur);cur=[];field='';} else if (ch==='\r'){} else field+=ch; }
-  }
-  if (field.length||cur.length){cur.push(field);rows.push(cur);}
-  if (rows.length<2){ setFeedback('CSV has no data rows.', 'error'); return; }
-  ingestRows(rows, filename);
-}
-function mapColumns(headers){
-  const norm = headers.map(h => (h||'').toString().toLowerCase().trim());
-  return {
-    date: norm.findIndex(h => h.includes('date')),
-    day:  norm.findIndex(h => h.match(/^day$/) || h.includes('day ')),
-    preWorkout:  norm.findIndex(h => h.includes('pre') && h.includes('workout')),
-    postWorkout: norm.findIndex(h => h.includes('post') && h.includes('workout')),
-    brunchLunch: norm.findIndex(h => h.includes('brunch') || h.includes('lunch')),
-    dinner:      norm.findIndex(h => h.includes('dinner')),
-    snacks:      norm.findIndex(h => h.includes('snack'))
-  };
-}
-function parseDate(v){
-  if (v == null) return null;
-  if (v instanceof Date && !isNaN(v)) return v;
-  const s = String(v).trim();
-  if (!s) return null;
-  const d = new Date(s); if (!isNaN(d)) return d;
-  const m = s.match(/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{2,4})$/);
-  if (m){ let [_,a,b,y]=m; y = y.length===2 ? '20'+y : y;
-    if (+a > 12) return new Date(`${y}-${b.padStart(2,'0')}-${a.padStart(2,'0')}`);
-    return new Date(`${y}-${a.padStart(2,'0')}-${b.padStart(2,'0')}`);
-  }
-  return null;
-}
-/* Convert free-text trainer meal description into structured items */
-function textToItems(text){
-  if (!text) return [];
-  // Split on commas, +, /, or newlines
-  const parts = String(text).split(/[,\n]|\s+\+\s+|\s+\/\s+/).map(s => s.trim()).filter(Boolean);
-  const out = [];
-  for (const p of parts){
-    // Try to extract a leading quantity
-    const m = p.match(/^(\d+(?:\.\d+)?[\s]*(?:g|kg|cup|tbsp|tsp|scoop|oz|cob|piece|slice|bowl)?|\d+\s*-\s*\d+|½|¼|¾|1\/2|1\/4|3\/4)\s*(.+)$/i);
-    if (m){
-      out.push({ q: m[1].trim(), name: m[2].trim() });
-    } else {
-      out.push({ q: '1', name: p });
-    }
-  }
-  return out;
-}
-function ingestRows(rows, source){
-  let headerIdx = 0;
-  for (let i=0;i<Math.min(rows.length,5);i++){
-    const nonEmpty = rows[i].filter(c => (c||'').toString().trim().length).length;
-    if (nonEmpty >= 3){ headerIdx = i; break; }
-  }
-  const headers = rows[headerIdx];
-  const map = mapColumns(headers);
-  if (map.date === -1){ setFeedback('Could not find a Date column. Header row needs a "Date" column.', 'error'); return; }
-  const days = [];
-  for (let r = headerIdx+1; r < rows.length; r++){
-    const row = rows[r]; if (!row || !row.length) continue;
-    const dt = parseDate(row[map.date]); if (!dt) continue;
-    const get = i => i >= 0 ? (row[i] != null ? String(row[i]).trim() : '') : '';
-    const items = {
-      preWorkout:  textToItems(get(map.preWorkout)),
-      postWorkout: textToItems(get(map.postWorkout)),
-      brunchLunch: textToItems(get(map.brunchLunch)),
-      dinner:      textToItems(get(map.dinner)),
-      snacks:      textToItems(get(map.snacks))
-    };
-    days.push({ date: fmtISO(dt), day: get(map.day) || dayName(dt), items });
-  }
-  if (!days.length){ setFeedback('No valid date rows found in the file.', 'error'); return; }
-  const groups = {};
-  for (const d of days){ const key = fmtISO(getMonday(parseISO(d.date))); if (!groups[key]) groups[key] = []; groups[key].push(d); }
-  for (const key in groups){
-    groups[key].sort((a,b) => a.date.localeCompare(b.date));
-    state.weeks[key] = { days: groups[key], uploadedAt: new Date().toISOString(), sourceFile: source };
-  }
-  saveState(state);
-  setFeedback(`✓ Imported ${days.length} day(s) across ${Object.keys(groups).length} week(s) from ${source}.`, 'success');
-  renderAll();
-}
-
-/* ---------- EXPORT / IMPORT / RESET ---------- */
-document.getElementById('exportBtn').onclick = () => {
-  const blob = new Blob([JSON.stringify(state, null, 2)], { type:'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = `food-challenge-${fmtISO(TODAY)}.json`; a.click();
-  URL.revokeObjectURL(url);
-};
-document.getElementById('importJsonBtn').onclick = () => document.getElementById('importJsonInput').click();
-document.getElementById('importJsonInput').addEventListener('change', e => {
-  const f = e.target.files[0]; if (!f) return;
-  const r = new FileReader();
-  r.onload = ev => {
-    try {
-      const obj = JSON.parse(ev.target.result);
-      if (obj && obj.weeks){ state = obj; saveState(state); setFeedback('✓ Restored from JSON.', 'success'); renderAll(); }
-      else throw new Error('No "weeks" key found.');
-    } catch(err){ setFeedback('Bad JSON: ' + err.message, 'error'); }
-  };
-  r.readAsText(f);
-});
-document.getElementById('resetBtn').onclick = () => {
-  if (confirm('Reset all data? This wipes uploaded weeks and grocery checkmarks. The pre-seeded sample week returns.')){
-    localStorage.removeItem(STORAGE_KEY);
-    state = loadState();
-    renderAll();
-    setFeedback('Data reset.', 'success');
-  }
-};
 
 /* ---------- ESCAPE ---------- */
 function escapeHtml(s){ return (s||'').toString().replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
