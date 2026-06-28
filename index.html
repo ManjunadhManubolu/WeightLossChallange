@@ -872,6 +872,10 @@
   .g-pill.store { background:rgba(56,189,248,0.16); color:#BAE6FD; border-color:rgba(56,189,248,0.3) }
   .g-pill.price { background:rgba(163,230,53,0.16); color:#D9F99D; border-color:rgba(163,230,53,0.3); font-weight:800 }
   .grocery-cat li.checked .g-pill{ opacity:.5 }
+  .grocery-cat li .g-note{
+    font-size:11.5px;color:#A4ABC9;font-style:italic;margin-top:2px;
+  }
+  .grocery-cat li.checked .g-note{opacity:.6}
 
   @keyframes checkPop {
     0%   { transform:scale(1); }
@@ -3117,6 +3121,97 @@ function canonicalize(rawName){
   return n;
 }
 
+/* ---------------------------------------------------------------------------
+   Quantity parser: turn each meal-plan q-string into a normalized {count, unit}.
+   - Picks the LOWER bound of a range (e.g. "150-200g" → 150g) so we don't over-buy.
+   - Handles fractions (¼, ½, ¾, 1/2, 1/4, 3/4) and "tbsp each" forms.
+   - Returns null when the qty is unitless (e.g. "1 bowl Salad") — caller decides.
+---------------------------------------------------------------------------- */
+function parseGroceryQty(qStr){
+  if (qStr == null) return { count: 1, unit: 'each' };
+  const s0 = String(qStr).trim().toLowerCase();
+  if (!s0) return { count: 1, unit: 'each' };
+
+  // Common fractions
+  const fracMap = { '¼': 0.25, '½': 0.5, '¾': 0.75, '1/4': 0.25, '1/2': 0.5, '3/4': 0.75 };
+  let s = s0;
+  for (const k in fracMap){ s = s.split(k).join(fracMap[k]); }
+
+  // Strip approximation symbols (~)
+  s = s.replace(/[~≈]/g, '').trim();
+
+  // Range like "150-200g" or "1-2" — take the lower bound
+  const rng = s.match(/(\d+(?:\.\d+)?)\s*[-–]\s*(\d+(?:\.\d+)?)/);
+  if (rng){ s = s.replace(rng[0], rng[1]); }
+
+  // Grams
+  let m = s.match(/(\d+(?:\.\d+)?)\s*g\b/);
+  if (m) return { count: parseFloat(m[1]), unit: 'g' };
+  // Kilograms
+  m = s.match(/(\d+(?:\.\d+)?)\s*kg\b/);
+  if (m) return { count: parseFloat(m[1]) * 1000, unit: 'g' };
+  // Ounces (used in some entries) — keep as 'oz'
+  m = s.match(/(\d+(?:\.\d+)?)\s*oz\b/);
+  if (m) return { count: parseFloat(m[1]), unit: 'oz' };
+  // Pounds
+  m = s.match(/(\d+(?:\.\d+)?)\s*lb\b/);
+  if (m) return { count: parseFloat(m[1]) * 16, unit: 'oz' };
+  // Tbsp / Tsp
+  m = s.match(/(\d+(?:\.\d+)?)\s*tbsp/);
+  if (m) return { count: parseFloat(m[1]), unit: 'tbsp' };
+  m = s.match(/(\d+(?:\.\d+)?)\s*tsp/);
+  if (m) return { count: parseFloat(m[1]), unit: 'tsp' };
+  // Cups
+  m = s.match(/(\d+(?:\.\d+)?)\s*cup/);
+  if (m) return { count: parseFloat(m[1]), unit: 'cup' };
+  // Scoop
+  m = s.match(/(\d+(?:\.\d+)?)\s*scoop/);
+  if (m) return { count: parseFloat(m[1]), unit: 'scoop' };
+  // Slice
+  m = s.match(/(\d+(?:\.\d+)?)\s*slice/);
+  if (m) return { count: parseFloat(m[1]), unit: 'slice' };
+  // Cob
+  m = s.match(/(\d+(?:\.\d+)?)\s*cob/);
+  if (m) return { count: parseFloat(m[1]), unit: 'cob' };
+  // Pinch / drop
+  if (/pinch|drop/.test(s)) return { count: 1, unit: 'pinch' };
+  // Glass
+  m = s.match(/(\d+(?:\.\d+)?)\s*glass/);
+  if (m) return { count: parseFloat(m[1]), unit: 'glass' };
+  // "small slice" type prose — assume 1 unit
+  if (/small\s+slice|piece|brazil|medium|large/.test(s)){
+    const lead = s.match(/^(\d+(?:\.\d+)?)/);
+    return { count: lead ? parseFloat(lead[1]) : 1, unit: 'each' };
+  }
+  // Bowl — non-buyable unit (handled in caller)
+  if (/bowl/.test(s)){ return { count: NaN, unit: 'bowl' }; }
+  // Leading bare number → each
+  m = s.match(/^(\d+(?:\.\d+)?)/);
+  if (m) return { count: parseFloat(m[1]), unit: 'each' };
+  return { count: 1, unit: 'each' };
+}
+
+/* Pretty-print a (count, unit) pair for display on the grocery row. */
+function fmtGroceryNeed(count, unit){
+  if (!isFinite(count) || count <= 0) return '';
+  // 1 decimal max, drop trailing .0
+  const n = (Math.round(count * 10) / 10).toString().replace(/\.0$/, '');
+  switch (unit){
+    case 'g':     return `${n} g`;
+    case 'oz':    return `${n} oz`;
+    case 'tbsp':  return `${n} tbsp`;
+    case 'tsp':   return `${n} tsp`;
+    case 'cup':   return `${n} cup${count === 1 ? '' : 's'}`;
+    case 'scoop': return `${n} scoop${count === 1 ? '' : 's'}`;
+    case 'slice': return `${n} slice${count === 1 ? '' : 's'}`;
+    case 'cob':   return `${n} cob${count === 1 ? '' : 's'}`;
+    case 'pinch': return `${n} pinch${count === 1 ? '' : 'es'}`;
+    case 'glass': return `${n} glass${count === 1 ? '' : 'es'}`;
+    case 'each':  return `${n}`;
+    default:      return `${n} ${unit}`;
+  }
+}
+
 function extractGroceries(weekStartISO){
   const wk = state.weeks[weekStartISO];
   if (!wk) return [];
@@ -3130,19 +3225,62 @@ function extractGroceries(weekStartISO){
         const db = lookupGrocery(canonical);
         if (db && db.skip) continue;
         const key = db ? Object.keys(GROCERY_DB).find(k => GROCERY_DB[k]===db) || canonical : canonical;
+        const parsed = parseGroceryQty(it.q);
         if (!found.has(key)){
           found.set(key, {
             name: key,
             cat:   db ? db.cat   : 'Other',
-            qty:   db ? db.qty   : '',
+            buyHint: db ? db.qty : '',  // legacy hardcoded "buy 1 week" hint (kept as a fallback note)
             store: db ? db.store : '',
-            price: db ? db.price : 0
+            price: db ? db.price : 0,
+            need: { count: 0, unit: parsed.unit, mixedUnits: false, rawCounts: [] }
           });
         }
+        const entry = found.get(key);
+        // Aggregate count; if the unit changes per occurrence (e.g. some "g" some "each"),
+        // we flag it and fall back to the raw list so we don't lie about quantity.
+        if (isFinite(parsed.count)){
+          if (entry.need.unit === parsed.unit){
+            entry.need.count += parsed.count;
+          } else if (entry.need.count === 0){
+            entry.need.unit  = parsed.unit;
+            entry.need.count = parsed.count;
+          } else {
+            entry.need.mixedUnits = true;
+          }
+        }
+        entry.need.rawCounts.push(String(it.q || '').trim() || '1');
       }
     }
   }
-  return Array.from(found.values());
+  // Finalize a `qty` display per item: prefer the aggregated count when possible,
+  // otherwise fall back to a "uses X" summary so it's never misleading.
+  const out = [];
+  for (const entry of found.values()){
+    let qty, note;
+    const days = entry.need.rawCounts.length;
+    if (entry.need.mixedUnits || !isFinite(entry.need.count) || entry.need.count <= 0){
+      // Either non-numeric (bowl/salad/etc) or units don't combine — keep the buy hint
+      qty = entry.buyHint || (entry.need.rawCounts.length
+        ? `uses ${entry.need.rawCounts.join(' + ')}`
+        : '');
+      note = days > 0 ? `from ${days} meal${days===1?'':'s'} this week` : '';
+    } else {
+      qty = fmtGroceryNeed(entry.need.count, entry.need.unit);
+      if (!qty && entry.buyHint) qty = entry.buyHint;
+      note = `from ${days} meal${days===1?'':'s'} this week`;
+    }
+    out.push({
+      name: entry.name,
+      cat: entry.cat,
+      qty,
+      note,
+      store: entry.store,
+      price: entry.price,
+      _need: entry.need
+    });
+  }
+  return out;
 }
 
 /* Build the grocery list HTML for a single week (the expanded view body). */
@@ -3218,6 +3356,7 @@ function renderGroceryWeekContent(key){
               ${it.store ? `<span class="g-pill store">📍 ${escapeHtml(it.store)}</span>` : ''}
               ${it.price > 0 ? `<span class="g-pill price">${priceStr}</span>` : ''}
             </div>
+            ${it.note ? `<div class="g-note">${escapeHtml(it.note)}</div>` : ''}
           </div>
         </li>`;
     }
