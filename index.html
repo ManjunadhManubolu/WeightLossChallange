@@ -1129,6 +1129,21 @@
     font-variant-numeric:tabular-nums;
   }
   .ch-streak span{font-size:12px;font-weight:700;color:#A4ABC9}
+  .ch-active-row{
+    display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+    background:rgba(0,0,0,0.25);
+    border:1px solid rgba(34,211,238,0.30);
+    border-radius:10px;padding:8px 12px;margin-bottom:10px;
+  }
+  .ch-active-label{
+    font-size:10.5px;letter-spacing:1.4px;text-transform:uppercase;font-weight:800;color:#A4ABC9;
+  }
+  .ch-active-day{
+    font-size:14px;font-weight:800;color:#F4F6FF;
+  }
+  .ch-active-hint{
+    margin-left:auto;font-size:11.5px;color:#A4ABC9;font-style:italic;
+  }
   .ch-rules{list-style:none;margin:0;padding:0;display:grid;gap:6px}
   .ch-rule{
     display:flex;align-items:center;gap:12px;cursor:pointer;user-select:none;
@@ -1169,7 +1184,14 @@
     background:rgba(255,255,255,0.04);
     border:1px solid rgba(255,255,255,0.10);
     border-radius:10px;padding:7px 6px;text-align:center;
-    transition:all .15s ease;
+    transition:transform .15s ease, background .15s ease, border-color .15s ease, box-shadow .15s ease;
+    cursor:pointer;font-family:inherit;color:inherit;
+  }
+  .ch-day:hover{transform:translateY(-2px);background:rgba(34,211,238,0.10);border-color:rgba(34,211,238,0.45)}
+  .ch-day.active{
+    background:rgba(34,211,238,0.16);
+    border-color:var(--accent);
+    box-shadow:0 0 0 1px rgba(34,211,238,0.55), 0 6px 18px -4px rgba(34,211,238,0.35);
   }
   .ch-day .d{font-size:10px;letter-spacing:1px;text-transform:uppercase;color:#A4ABC9;font-weight:800}
   .ch-day .i{font-size:18px;font-weight:900;margin-top:3px;color:#A4ABC9;line-height:1}
@@ -2484,26 +2506,37 @@ function renderChallengeCard(weekStartIso, dayIso){
   if (!ch) return '';
   const progress = loadChallengeProgress();
   const wk = (progress[weekStartIso] || {});
-  const dayState = wk[dayIso] || {};
+  // Default the editable day to the one passed in (today, usually).
+  // Clamp into the week range as a safety net.
+  const weekStart = parseISO(weekStartIso);
+  const weekEnd = addDays(weekStart, 6);
+  const passed = parseISO(dayIso);
+  let activeIso = dayIso;
+  if (passed < weekStart) activeIso = fmtISO(weekStart);
+  else if (passed > weekEnd) activeIso = fmtISO(weekEnd);
+  const dayState = wk[activeIso] || {};
   const allDone = ch.rules.every(r => dayState[r.id] === true);
   const streak = challengeStreak(weekStartIso);
   const won = streak >= ch.days;
-  // Build a 7-cell streak ladder
+  const activeLabel = `${dayName(parseISO(activeIso))} · ${shortMonth(parseISO(activeIso))}`;
+
+  // Build a 7-cell streak ladder (tap any cell to edit that day)
   let ladder = '';
   for (let i=0;i<7;i++){
-    const d = addDays(parseISO(weekStartIso), i);
+    const d = addDays(weekStart, i);
     const iso = fmtISO(d);
     const done = isDayChallengeComplete(weekStartIso, iso);
     const isToday = iso === fmtISO(TODAY);
     const isFuture = d > TODAY;
-    const cls = [done && 'done', isToday && 'today', isFuture && 'future'].filter(Boolean).join(' ');
-    ladder += `<div class="ch-day ${cls}" title="${dayName(d)} ${shortMonth(d)}">
+    const isActive = iso === activeIso;
+    const cls = [done && 'done', isToday && 'today', isFuture && 'future', isActive && 'active'].filter(Boolean).join(' ');
+    ladder += `<button type="button" class="ch-day ${cls}" data-jumpch="${iso}" title="${dayName(d)} ${shortMonth(d)} — tap to edit this day">
       <div class="d">${dayName(d).slice(0,3)}</div>
       <div class="i">${done ? '✓' : (isFuture ? '·' : '○')}</div>
-    </div>`;
+    </button>`;
   }
   return `
-    <div class="challenge-card ${allDone ? 'all-done' : ''} ${won ? 'won' : ''}" data-week="${weekStartIso}" data-day="${dayIso}">
+    <div class="challenge-card ${allDone ? 'all-done' : ''} ${won ? 'won' : ''}" data-week="${weekStartIso}" data-day="${activeIso}">
       <div class="ch-head">
         <div class="ch-title-row">
           <span class="ch-emoji">${ch.emoji}</span>
@@ -2513,6 +2546,11 @@ function renderChallengeCard(weekStartIso, dayIso){
           </div>
         </div>
         <div class="ch-streak"><b>${streak}</b><span>/ ${ch.days} day${ch.days===1?'':'s'}</span></div>
+      </div>
+      <div class="ch-active-row">
+        <span class="ch-active-label">Marking</span>
+        <span class="ch-active-day">${activeLabel}</span>
+        <span class="ch-active-hint">Tap any day below to switch</span>
       </div>
       <ul class="ch-rules">
         ${ch.rules.map(r => `
@@ -2544,6 +2582,21 @@ function wireChallengeCard(scope){
         li.classList.toggle('checked', next);
         // Live-update streak count + ladder + win banner
         renderAll();
+      });
+    });
+    // Ladder cell click — switch the active day this card is editing
+    card.querySelectorAll('.ch-day[data-jumpch]').forEach(cell => {
+      cell.addEventListener('click', () => {
+        const targetIso = cell.dataset.jumpch;
+        if (targetIso === dayIso) return;
+        // Persist the choice on the card and re-render JUST the card area.
+        // We swap the card in place so other panels (Today macros etc.) don't churn.
+        const newHtml = renderChallengeCard(weekStartIso, targetIso);
+        const tmp = document.createElement('div');
+        tmp.innerHTML = newHtml;
+        const fresh = tmp.firstElementChild;
+        card.parentNode.replaceChild(fresh, card);
+        wireChallengeCard(fresh.parentNode);
       });
     });
   });
