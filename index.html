@@ -1026,6 +1026,116 @@
     margin-top:48px;backdrop-filter:blur(8px);
   }
 
+  /* ===== TRAINER CHALLENGE CARD ===== */
+  .challenge-card{
+    position:relative;overflow:hidden;
+    background:
+      radial-gradient(360px 200px at 100% 0%, rgba(255,255,255,0.10), transparent 60%),
+      linear-gradient(135deg, rgba(124,58,237,0.30) 0%, rgba(34,211,238,0.18) 60%, rgba(163,230,53,0.16) 100%);
+    border:1px solid rgba(255,255,255,0.18);
+    border-radius:18px;
+    padding:18px 20px;
+    margin-bottom:18px;
+    box-shadow:var(--shadow), inset 0 1px 0 rgba(255,255,255,0.12);
+    backdrop-filter:blur(14px) saturate(1.3);
+  }
+  .challenge-card::before{
+    content:"";position:absolute;inset:-1px;border-radius:18px;pointer-events:none;
+    background:linear-gradient(135deg, rgba(163,230,53,0.55), rgba(34,211,238,0.45), rgba(124,58,237,0.55));
+    -webkit-mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+            mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite:xor; mask-composite:exclude;
+    padding:1.5px;opacity:.55;
+  }
+  .challenge-card.all-done::before{opacity:.85;animation:chPulse 1.6s ease-in-out infinite alternate}
+  @keyframes chPulse{ from{opacity:.5} to{opacity:.95} }
+  .ch-head{
+    display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap;
+    margin-bottom:12px;
+  }
+  .ch-title-row{display:flex;align-items:center;gap:12px}
+  .ch-emoji{
+    font-size:30px;line-height:1;
+    filter:drop-shadow(0 2px 8px rgba(0,0,0,0.35));
+    animation:chFloat 3.2s ease-in-out infinite alternate;
+  }
+  @keyframes chFloat{ from{transform:translateY(0) rotate(-4deg)} to{transform:translateY(-4px) rotate(6deg)} }
+  .ch-eyebrow{font-size:10.5px;letter-spacing:1.6px;text-transform:uppercase;color:#A4ABC9;font-weight:800}
+  .ch-title{margin:2px 0 0;font-size:18px;font-weight:900;letter-spacing:-.3px;color:#F4F6FF}
+  .ch-streak{
+    display:flex;align-items:baseline;gap:4px;
+    background:rgba(0,0,0,0.35);border:1px solid rgba(255,255,255,0.12);border-radius:12px;
+    padding:8px 14px;
+  }
+  .ch-streak b{
+    font-size:24px;font-weight:900;letter-spacing:-.8px;line-height:1;
+    background:linear-gradient(135deg, var(--neon), var(--accent));
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    font-variant-numeric:tabular-nums;
+  }
+  .ch-streak span{font-size:12px;font-weight:700;color:#A4ABC9}
+  .ch-rules{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+  .ch-rule{
+    display:flex;align-items:center;gap:12px;cursor:pointer;user-select:none;
+    background:rgba(255,255,255,0.04);
+    border:1px solid rgba(255,255,255,0.08);
+    border-radius:12px;padding:10px 14px;
+    transition:transform .15s ease, background .15s ease, border-color .15s ease;
+  }
+  .ch-rule:hover{transform:translateY(-1px);background:rgba(34,211,238,0.10);border-color:rgba(34,211,238,0.4)}
+  .ch-rule .ch-check{
+    width:22px;height:22px;flex-shrink:0;border-radius:7px;
+    background:rgba(255,255,255,0.04);
+    border:2px solid rgba(255,255,255,0.22);
+    display:flex;align-items:center;justify-content:center;
+    transition:all .2s cubic-bezier(.2,.9,.3,1.3);
+  }
+  .ch-rule.checked .ch-check{
+    background:linear-gradient(135deg, var(--neon), var(--accent));
+    border-color:transparent;
+    box-shadow:0 4px 12px rgba(34,211,238,0.35);
+    animation:checkPop .35s cubic-bezier(.2,.9,.3,1.3);
+  }
+  .ch-rule.checked .ch-check::after{
+    content:"✓";color:#0B1023;font-weight:900;font-size:14px;line-height:1;
+  }
+  .ch-rule .ch-text{font-size:14px;line-height:1.45;color:#E7EAFB}
+  .ch-rule.checked .ch-text{color:#A4ABC9;text-decoration:line-through}
+  .ch-rule.checked .ch-text b{color:#A4ABC9}
+  .ch-rule .ch-text b{color:#F4F6FF;font-weight:800}
+  .ch-goal{
+    margin-top:12px;font-size:13px;font-weight:700;color:#D9F99D;
+    background:rgba(163,230,53,0.10);border:1px solid rgba(163,230,53,0.25);
+    padding:8px 12px;border-radius:10px;
+  }
+  .ch-ladder{display:flex;gap:6px;margin-top:12px;flex-wrap:wrap}
+  .ch-day{
+    flex:1 1 0;min-width:42px;
+    background:rgba(255,255,255,0.04);
+    border:1px solid rgba(255,255,255,0.10);
+    border-radius:10px;padding:7px 6px;text-align:center;
+    transition:all .15s ease;
+  }
+  .ch-day .d{font-size:10px;letter-spacing:1px;text-transform:uppercase;color:#A4ABC9;font-weight:800}
+  .ch-day .i{font-size:18px;font-weight:900;margin-top:3px;color:#A4ABC9;line-height:1}
+  .ch-day.done{
+    background:linear-gradient(180deg, rgba(163,230,53,0.20), rgba(34,211,238,0.16));
+    border-color:rgba(163,230,53,0.55);
+  }
+  .ch-day.done .i{color:#0B1023;background:linear-gradient(135deg, var(--neon), var(--accent));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .ch-day.today{
+    border-color:rgba(34,211,238,0.7);
+    box-shadow:0 0 0 1px rgba(34,211,238,0.45), 0 6px 16px -4px rgba(34,211,238,0.35);
+  }
+  .ch-day.future{opacity:.55}
+  .ch-win{
+    margin-top:14px;padding:12px 14px;border-radius:12px;
+    background:linear-gradient(135deg, rgba(163,230,53,0.22), rgba(34,211,238,0.18));
+    border:1px solid rgba(163,230,53,0.45);
+    color:#D9F99D;font-weight:800;text-align:center;
+    animation:chPulse 1.6s ease-in-out infinite alternate;
+  }
+
   @media (max-width:680px){
     .hero{padding:32px 18px 24px}
     main{padding:0 16px}
@@ -1826,6 +1936,53 @@ function makeSundayW4(){
   };
 }
 
+/* ---------- WEEKLY TRAINER CHALLENGES ---------- */
+/* Add a new entry each week with the week-start ISO date. UI auto-shows on Today + This Week. */
+const WEEKLY_CHALLENGES = {
+  '2026-06-29': {
+    title: 'Tighten the dinner window',
+    emoji: '🌙',
+    rules: [
+      { id:'dinner8',    text:'Finish dinner by <b>8:00 PM</b>' },
+      { id:'gap2hr',     text:'Wait <b>2+ hours</b> after dinner before sleeping' },
+      { id:'sipNoSnack', text:'Hungry late? <b>Warm water or herbal tea only</b> — nothing outside the meal plan' }
+    ],
+    goal: 'Hit all three for 7 days in a row.',
+    days: 7
+  }
+};
+const CHALLENGE_KEY = 'foodChallenge_challenges_v1';
+function loadChallengeProgress(){
+  try { return JSON.parse(localStorage.getItem(CHALLENGE_KEY) || '{}') || {}; } catch(e){ return {}; }
+}
+function saveChallengeProgress(p){
+  localStorage.setItem(CHALLENGE_KEY, JSON.stringify(p));
+  if (window.cloudSync && window.cloudSync.user && window.cloudSync.pushChallenge){
+    window.cloudSync.pushChallenge(p);
+  }
+}
+function challengeForWeek(weekStartIso){
+  return WEEKLY_CHALLENGES[weekStartIso] || null;
+}
+function isDayChallengeComplete(weekStartIso, dayIso){
+  const ch = challengeForWeek(weekStartIso); if (!ch) return false;
+  const p = loadChallengeProgress();
+  const wk = p[weekStartIso] || {};
+  const day = wk[dayIso] || {};
+  return ch.rules.every(r => day[r.id] === true);
+}
+function challengeStreak(weekStartIso){
+  const ch = challengeForWeek(weekStartIso); if (!ch) return 0;
+  let streak = 0;
+  for (let i=0;i<7;i++){
+    const d = addDays(parseISO(weekStartIso), i);
+    if (d > TODAY) break;
+    if (!isDayChallengeComplete(weekStartIso, fmtISO(d))) break;
+    streak++;
+  }
+  return streak;
+}
+
 /* ---------- STATE ---------- */
 /* Build SEED_DATA NOW that all make*() and SALAD_NOTE constants are in scope */
 SEED_DATA = {
@@ -2247,7 +2404,9 @@ function renderToday(){
 
   const total = dayTotalMacros(todayPlan);
   const tf = fmtMacro(total);
+  const weekStartIsoToday = fmtISO(getMonday(TODAY));
   let body = `
+    ${renderChallengeCard(weekStartIsoToday, dateISO)}
     <div class="source-legend">
       <strong>Quantity source:</strong>
       <span><span class="src-chip diet">D</span> Dietitian (verbatim)</span>
@@ -2285,6 +2444,77 @@ function renderToday(){
   body += saladReferenceHTML();
 
   c.innerHTML = body;
+  wireChallengeCard(c);
+}
+
+function renderChallengeCard(weekStartIso, dayIso){
+  const ch = challengeForWeek(weekStartIso);
+  if (!ch) return '';
+  const progress = loadChallengeProgress();
+  const wk = (progress[weekStartIso] || {});
+  const dayState = wk[dayIso] || {};
+  const allDone = ch.rules.every(r => dayState[r.id] === true);
+  const streak = challengeStreak(weekStartIso);
+  const won = streak >= ch.days;
+  // Build a 7-cell streak ladder
+  let ladder = '';
+  for (let i=0;i<7;i++){
+    const d = addDays(parseISO(weekStartIso), i);
+    const iso = fmtISO(d);
+    const done = isDayChallengeComplete(weekStartIso, iso);
+    const isToday = iso === fmtISO(TODAY);
+    const isFuture = d > TODAY;
+    const cls = [done && 'done', isToday && 'today', isFuture && 'future'].filter(Boolean).join(' ');
+    ladder += `<div class="ch-day ${cls}" title="${dayName(d)} ${shortMonth(d)}">
+      <div class="d">${dayName(d).slice(0,3)}</div>
+      <div class="i">${done ? '✓' : (isFuture ? '·' : '○')}</div>
+    </div>`;
+  }
+  return `
+    <div class="challenge-card ${allDone ? 'all-done' : ''} ${won ? 'won' : ''}" data-week="${weekStartIso}" data-day="${dayIso}">
+      <div class="ch-head">
+        <div class="ch-title-row">
+          <span class="ch-emoji">${ch.emoji}</span>
+          <div>
+            <div class="ch-eyebrow">Trainer's challenge · this week</div>
+            <h3 class="ch-title">${ch.title}</h3>
+          </div>
+        </div>
+        <div class="ch-streak"><b>${streak}</b><span>/ ${ch.days} day${ch.days===1?'':'s'}</span></div>
+      </div>
+      <ul class="ch-rules">
+        ${ch.rules.map(r => `
+          <li class="ch-rule ${dayState[r.id]?'checked':''}" data-rule="${r.id}">
+            <span class="ch-check"></span>
+            <span class="ch-text">${r.text}</span>
+          </li>
+        `).join('')}
+      </ul>
+      <div class="ch-goal">🎯 ${ch.goal}</div>
+      <div class="ch-ladder">${ladder}</div>
+      ${won ? '<div class="ch-win">🏆 Challenge complete — 7-day streak locked in!</div>' : ''}
+    </div>`;
+}
+
+function wireChallengeCard(scope){
+  scope.querySelectorAll('.challenge-card').forEach(card => {
+    const weekStartIso = card.dataset.week;
+    const dayIso = card.dataset.day;
+    card.querySelectorAll('.ch-rule').forEach(li => {
+      li.addEventListener('click', () => {
+        const ruleId = li.dataset.rule;
+        const p = loadChallengeProgress();
+        if (!p[weekStartIso]) p[weekStartIso] = {};
+        if (!p[weekStartIso][dayIso]) p[weekStartIso][dayIso] = {};
+        const next = !p[weekStartIso][dayIso][ruleId];
+        p[weekStartIso][dayIso][ruleId] = next;
+        saveChallengeProgress(p);
+        li.classList.toggle('checked', next);
+        // Live-update streak count + ladder + win banner
+        renderAll();
+      });
+    });
+  });
 }
 
 function servingsReferenceHTML(){
@@ -2457,7 +2687,10 @@ function renderWeek(){
   }
   jumper += '</div>';
 
-  let html = timeline + jumper;
+  // Per-week trainer challenge (placed prominently above day list)
+  const challengeHtml = renderChallengeCard(currIso, fmtISO(TODAY < start ? start : (TODAY > end ? end : TODAY)));
+
+  let html = timeline + jumper + challengeHtml;
   html += `
     <div class="view-toggle" role="tablist" aria-label="View mode">
       <button data-view="compact"  class="${savedView==='compact'?'active':''}"  type="button"><span class="ic">📋</span> One day at a time</button>
@@ -2554,6 +2787,8 @@ function renderWeek(){
   // Scroll the timeline so the current week is visible
   const currPip = c.querySelector('.wt-pip.current');
   if (currPip) currPip.scrollIntoView({behavior:'smooth', inline:'center', block:'nearest'});
+
+  wireChallengeCard(c);
 
   // Day jumper — scroll the matching day card into view (expand if compact)
   c.querySelectorAll('.dj-chip[data-jumpday]').forEach(chip => {
@@ -3861,6 +4096,12 @@ window.applyRemoteGoal = function(remote){
   if (remote && typeof remote === 'object'){
     localStorage.setItem(GOAL_KEY, JSON.stringify(remote));
     if (document.querySelector('.tabbtn[data-tab=goal].active')) renderGoal();
+  }
+};
+window.applyRemoteChallenge = function(remote){
+  if (remote && typeof remote === 'object'){
+    localStorage.setItem(CHALLENGE_KEY, JSON.stringify(remote));
+    renderAll();
   }
 };
 window.getLocalSnapshots = function(){
