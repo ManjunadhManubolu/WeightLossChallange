@@ -1026,6 +1026,62 @@
     margin-top:48px;backdrop-filter:blur(8px);
   }
 
+  /* ===== GOAL MATH DETAILS ===== */
+  .math-details{
+    margin-top:18px;
+    background:linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+    border:1px solid rgba(255,255,255,0.10);
+    border-radius:var(--r);
+    box-shadow:var(--shadow);
+    backdrop-filter:blur(10px);
+    overflow:hidden;
+  }
+  .math-details > summary{
+    list-style:none;cursor:pointer;
+    padding:16px 20px;
+    display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+    user-select:none;
+    transition:background .15s ease;
+  }
+  .math-details > summary::-webkit-details-marker{display:none}
+  .math-details > summary::after{
+    content:"▼";color:var(--accent);font-size:12px;
+    transition:transform .25s ease;
+  }
+  .math-details[open] > summary::after{transform:rotate(180deg)}
+  .math-details > summary:hover{background:rgba(34,211,238,0.06)}
+  .math-tag{
+    display:inline-block;font-size:11px;letter-spacing:1.4px;font-weight:800;
+    color:#0B1023;
+    background:linear-gradient(135deg, var(--neon), var(--accent));
+    padding:5px 12px;border-radius:999px;margin-right:10px;
+    box-shadow:0 4px 12px rgba(34,211,238,0.3);
+  }
+  .math-sum{color:#A4ABC9;font-size:13px;font-weight:600}
+  .math-body{
+    padding:0 20px 20px;display:grid;gap:14px;
+    animation:cardRise .35s ease both;
+  }
+  .math-block{
+    background:rgba(0,0,0,0.25);border:1px solid rgba(255,255,255,0.07);
+    border-radius:12px;padding:14px 16px;
+  }
+  .math-block h4{margin:0 0 8px;font-size:14px;font-weight:800;color:#F4F6FF;letter-spacing:.1px}
+  .math-block .formula{font-size:13px;color:#CFE6F8;line-height:1.55;margin-bottom:4px}
+  .math-block .formula.mono{
+    font-family:"SF Mono","Menlo","Consolas","Liberation Mono",monospace;
+    background:rgba(11,16,35,0.6);border:1px solid rgba(255,255,255,0.07);
+    border-radius:8px;padding:8px 12px;margin:6px 0;
+    overflow-x:auto;color:#E7EAFB;
+  }
+  .math-block .formula.mono b{color:var(--neon);font-weight:800}
+  .math-block .formula .eq{margin-left:8px;color:#A4ABC9}
+  .math-block .formula .eq b{color:var(--neon)}
+  .math-block .note{font-size:12.5px;color:#A4ABC9;margin-top:6px;line-height:1.5}
+  .math-block .note.warn{color:#FED7AA;background:rgba(251,146,60,0.10);border:1px solid rgba(251,146,60,0.25);padding:8px 12px;border-radius:8px}
+  .math-block .src-list{margin:6px 0 0;padding-left:18px;color:#A4ABC9;font-size:12.5px;line-height:1.7}
+  .math-block .src-list em{color:#CFE6F8}
+
   /* ===== TRAINER CHALLENGE CARD ===== */
   .challenge-card{
     position:relative;overflow:hidden;
@@ -3829,23 +3885,73 @@ function recomputeGoal(){
   const tgtCls = bmiClass(tgtBmi);
   const bmrKcal = bmr(curKg, heightCm, age, sex);
   const tdee    = bmrKcal * act;
-  const dailyCalsRecommended = Math.max(1200, Math.round(tdee - 500));
+  const safeFloor = sex === 'female' ? 1200 : 1500;
+  const dailyCalsRecommended = Math.max(safeFloor, Math.round(tdee - 500));
+
+  // ---- Industry-standard derived targets ----
+  // Protein: 1.6–2.2 g/kg body weight (ISSN 2017, ACSM, weight-loss range)
+  const proteinLow  = Math.round(curKg * 1.6);
+  const proteinHigh = Math.round(curKg * 2.2);
+  // Hydration: 30–35 mL/kg/day (ACSM)
+  const waterMlLow  = Math.round(curKg * 30);
+  const waterMlHigh = Math.round(curKg * 35);
+  // BMI 18.5 = underweight cutoff → minimum healthy weight at this height
+  const minHealthyKg = heightM > 0 ? 18.5 * heightM * heightM : 0;
+  const targetBelowHealthy = tgtKg > 0 && tgtKg < minHealthyKg;
+  // BMI 25 = overweight cutoff → max healthy weight at this height
+  const maxHealthyKg = heightM > 0 ? 24.9 * heightM * heightM : 0;
+
+  // ---- Adaptive (non-linear) timeline ----
+  // Real loss slows as TDEE falls with weight. Re-simulate week by week.
+  // Uses recommended 500 kcal/day deficit (capped at safeFloor) when not on custom mode,
+  // or the user's custom deficit when they've overridden.
+  function simulateAdaptive(initialKg, kcalEatenPerDay, useRecommendedDeficit){
+    let w = initialKg;
+    let weeks = 0;
+    const maxWeeks = 520; // 10-year safety cap
+    while (w > tgtKg && weeks < maxWeeks){
+      const bmrW  = bmr(w, heightCm, age, sex);
+      const tdeeW = bmrW * act;
+      let intake;
+      if (useRecommendedDeficit){
+        intake = Math.max(safeFloor, tdeeW - 500);
+      } else {
+        intake = kcalEatenPerDay;
+      }
+      const weeklyDeficit = (tdeeW - intake) * 7;
+      if (weeklyDeficit <= 0) return { weeks: Infinity, days: Infinity };
+      const kgLostThisWeek = weeklyDeficit / 7700;
+      w -= kgLostThisWeek;
+      weeks++;
+    }
+    return { weeks, days: weeks * 7 };
+  }
+  // Adaptive at recommended pace (500 kcal default deficit, but floor-capped)
+  let adaptive = { weeks: Infinity, days: Infinity };
+  if (lossKg > 0){
+    adaptive = simulateAdaptive(curKg, null, true);
+  }
 
   // Custom-deficit math
-  // 1 kg of fat ≈ 7700 kcal. Daily deficit (kcal) ÷ 7700 = kg lost per day.
-  let customDeficit = 0, customRateKgPerWeek = 0, customDays = 0, customWarning = '';
+  // 1 kg of fat ≈ 7700 kcal (Wishnofsky). Daily deficit (kcal) ÷ 7700 = kg lost per day.
+  // We compute BOTH the naive linear estimate AND the adaptive estimate (real-world).
+  let customDeficit = 0, customRateKgPerWeek = 0;
+  let customDaysLinear = 0, customDaysAdaptive = 0;
+  let customWarning = '';
   if (useCustom && customCals > 0){
     customDeficit = tdee - customCals;
     customRateKgPerWeek = (customDeficit / 7700) * 7;
     if (customDeficit <= 0){
       customWarning = `Your intake (${customCals} kcal) is at or above your TDEE (~${Math.round(tdee)} kcal). At this rate you'd maintain or gain weight, not lose.`;
     } else if (customDeficit > 1000){
-      customWarning = `That's a ${Math.round(customDeficit)} kcal/day deficit — very aggressive. Risks muscle loss, fatigue, hormonal disruption. Most coaches cap at 750 kcal.`;
-    } else if ((sex === 'male' && customCals < 1500) || (sex === 'female' && customCals < 1200)){
-      customWarning = `Below the safe long-term floor (${sex==='male'?'1500':'1200'} kcal/day for ${sex}s). OK short-term; not sustainable.`;
+      customWarning = `${Math.round(customDeficit)} kcal/day deficit is aggressive (CDC/ACSM cap ≈ 1,000 kcal). Risks muscle loss, fatigue, hormonal/menstrual disruption.`;
+    } else if (customCals < safeFloor){
+      customWarning = `Below the safe long-term floor (${safeFloor} kcal/day for ${sex}s). OK short-term; not sustainable.`;
     }
     if (customDeficit > 0){
-      customDays = Math.ceil(lossKg / (customDeficit / 7700));
+      customDaysLinear = Math.ceil(lossKg / (customDeficit / 7700));
+      const sim = simulateAdaptive(curKg, customCals, false);
+      customDaysAdaptive = isFinite(sim.days) ? sim.days : 0;
     }
   }
 
@@ -3873,11 +3979,22 @@ function recomputeGoal(){
   }).join('');
 
   // Hero summary — switches between recommended and custom mode
-  const recRate = 0.5;
-  const recDays = Math.ceil((lossKg / recRate) * 7);
-  const recEta = new Date(today); recEta.setDate(recEta.getDate() + recDays);
+  const recRate = 0.5; // kg/week, the standard 0.5kg/1lb pace
+  const recDaysLinear = Math.ceil((lossKg / recRate) * 7);
+  const recEtaLinear = new Date(today); recEtaLinear.setDate(recEtaLinear.getDate() + recDaysLinear);
+  const recDaysAdaptive = isFinite(adaptive.days) ? Math.ceil(adaptive.days) : recDaysLinear;
+  const recEtaAdaptive = new Date(today); recEtaAdaptive.setDate(recEtaAdaptive.getDate() + recDaysAdaptive);
+
   let hero;
-  if (isGain){
+  if (targetBelowHealthy && lossKg > 0){
+    const minKg = minHealthyKg;
+    const minDisplay = g.weightUnit === 'lb' ? `${kgToLb(minKg).toFixed(1)} lb` : `${minKg.toFixed(1)} kg`;
+    hero = `
+      <div class="goal-hero" style="background:radial-gradient(400px 200px at 100% 0%, rgba(255,255,255,0.18), transparent 60%), linear-gradient(135deg, #7F1D1D 0%, #991B1B 50%, #F43F5E 100%)">
+        <h2>⚠️ Target weight is below healthy BMI</h2>
+        <div class="sub">Target BMI ${tgtBmi.toFixed(1)} = <b>underweight</b>. The lowest healthy weight at your height is about <b>${minDisplay}</b> (BMI 18.5). Going lower risks muscle loss, hormonal/menstrual issues, and bone density.</div>
+      </div>`;
+  } else if (isGain){
     hero = `
       <div class="goal-hero">
         <h2>Target is above current weight</h2>
@@ -3890,23 +4007,32 @@ function recomputeGoal(){
         <div class="sub">Maintenance calories: <strong>${Math.round(tdee)} kcal/day</strong>.</div>
       </div>`;
   } else if (useCustom && customCals > 0 && customDeficit > 0){
-    const eta = new Date(today); eta.setDate(eta.getDate() + customDays);
+    const etaLin = new Date(today); etaLin.setDate(etaLin.getDate() + customDaysLinear);
+    const etaAd  = new Date(today); etaAd.setDate(etaAd.getDate() + customDaysAdaptive);
     const lossDisplay = g.weightUnit === 'lb' ? `${lossLb.toFixed(1)} lb` : `${lossKg.toFixed(1)} kg`;
     const rateDisp = g.weightUnit === 'lb'
       ? `${(customRateKgPerWeek*2.205).toFixed(2)} lb / wk`
       : `${customRateKgPerWeek.toFixed(2)} kg / wk`;
     hero = `
       <div class="goal-hero">
-        <h2>~ ${customDays} days at YOUR pace</h2>
-        <div class="sub">Eating ${customCals} kcal/day · TDEE ${Math.round(tdee)} · deficit <strong>${Math.round(customDeficit)} kcal/day</strong> · projected loss <strong>${rateDisp}</strong>.</div>
-        <div class="big-num">${customDays}</div>
-        <div class="big-label">days · ${Math.ceil(customDays/7)} weeks · lose ${lossDisplay}</div>
-        <div class="eta">🎯 Goal date: ${fmtDate(eta)}</div>
+        <h2>Your pace · ${customDaysAdaptive} days realistic · ${customDaysLinear} days textbook</h2>
+        <div class="sub">Eating ${customCals} kcal/day · TDEE ${Math.round(tdee)} · deficit <strong>${Math.round(customDeficit)} kcal/day</strong> · starting rate <strong>${rateDisp}</strong>.</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:14px">
+          <div>
+            <div class="big-num" style="font-size:54px">${customDaysAdaptive}</div>
+            <div class="big-label">days · realistic (adaptive)<br>🎯 ${fmtDate(etaAd)}</div>
+          </div>
+          <div style="opacity:.7">
+            <div class="big-num" style="font-size:42px">${customDaysLinear}</div>
+            <div class="big-label">days · textbook (linear)<br>${fmtDate(etaLin)}</div>
+          </div>
+        </div>
+        <div class="eta">Lose ${lossDisplay} total</div>
       </div>
       ${customWarning ? `<div class="disclaimer-box" style="margin-top:-4px;margin-bottom:14px"><strong>⚠️ Heads up:</strong> ${customWarning}</div>` : ''}`;
   } else if (useCustom && customCals > 0 && customDeficit <= 0){
     hero = `
-      <div class="goal-hero" style="background:linear-gradient(135deg,#7F1D1D 0%,#991B1B 100%)">
+      <div class="goal-hero" style="background:radial-gradient(400px 200px at 100% 0%, rgba(255,255,255,0.18), transparent 60%), linear-gradient(135deg, #7F1D1D 0%, #991B1B 100%)">
         <h2>No deficit — won't lose at this intake</h2>
         <div class="sub">Eating ${customCals} kcal/day · TDEE ${Math.round(tdee)} kcal. You'd need to eat below ~${Math.round(tdee)} kcal to lose.</div>
       </div>`;
@@ -3914,11 +4040,18 @@ function recomputeGoal(){
     const lossDisplay = g.weightUnit === 'lb' ? `${lossLb.toFixed(1)} lb` : `${lossKg.toFixed(1)} kg`;
     hero = `
       <div class="goal-hero">
-        <h2>~ ${recDays} days at the recommended pace</h2>
-        <div class="sub">Lose <strong>${lossDisplay}</strong> at 0.5 kg / 1 lb per week → reach goal <strong>${fmtDate(recEta)}</strong>.</div>
-        <div class="big-num">${recDays}</div>
-        <div class="big-label">days · ${Math.ceil(recDays/7)} weeks</div>
-        <div class="eta">🎯 Goal date: ${fmtDate(recEta)}</div>
+        <h2>Recommended pace · ${recDaysAdaptive} days realistic · ${recDaysLinear} days textbook</h2>
+        <div class="sub">Lose <strong>${lossDisplay}</strong> at the standard 0.5 kg / 1 lb per week. The realistic number accounts for slowing loss as you get lighter.</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:14px">
+          <div>
+            <div class="big-num" style="font-size:54px">${recDaysAdaptive}</div>
+            <div class="big-label">days · realistic (adaptive)<br>🎯 ${fmtDate(recEtaAdaptive)}</div>
+          </div>
+          <div style="opacity:.7">
+            <div class="big-num" style="font-size:42px">${recDaysLinear}</div>
+            <div class="big-label">days · textbook (linear)<br>${fmtDate(recEtaLinear)}</div>
+          </div>
+        </div>
       </div>`;
   }
 
@@ -3947,7 +4080,7 @@ function recomputeGoal(){
         <div class="val">${Math.round(tdee)}</div>
         <div class="sub">BMR ${Math.round(bmrKcal)} × ${act} (TDEE)</div>
       </div>
-      <div class="goal-card" style="border-left:4px solid ${useCustom?'var(--info)':'var(--green)'}">
+      <div class="goal-card" style="border-left:4px solid ${useCustom?'var(--info)':'var(--neon)'}">
         <div class="lbl">${useCustom ? 'Your daily intake' : 'Daily target (rec.)'}</div>
         <div class="val">${useCustom && customCals>0 ? customCals : dailyCalsRecommended}</div>
         <div class="sub">${
@@ -3955,15 +4088,141 @@ function recomputeGoal(){
             ? (customDeficit > 0
                 ? `${Math.round(customDeficit)} kcal/day deficit · ${customRateKgPerWeek.toFixed(2)} kg/wk`
                 : `No deficit (intake ≥ TDEE)`)
-            : '~500 kcal deficit → 0.5 kg/wk'
+            : `Target − 500 kcal (floored at ${safeFloor})`
         }</div>
+      </div>
+      <div class="goal-card" style="border-left:4px solid var(--rose)">
+        <div class="lbl">Protein target</div>
+        <div class="val">${proteinLow}–${proteinHigh} g</div>
+        <div class="sub">1.6–2.2 g per kg body weight (ISSN/ACSM, weight-loss range)</div>
+      </div>
+      <div class="goal-card" style="border-left:4px solid var(--info)">
+        <div class="lbl">Water target</div>
+        <div class="val">${(waterMlLow/1000).toFixed(1)}–${(waterMlHigh/1000).toFixed(1)} L</div>
+        <div class="sub">30–35 mL per kg body weight (ACSM). Add ~500 mL per hour of training.</div>
       </div>
     </div>
 
     ${lossKg > 0 ? `
-      <h3 style="margin:8px 0 8px;font-size:16px">Timeline at different paces</h3>
+      <h3 style="margin:8px 0 8px;font-size:16px">Timeline at different paces (textbook · linear)</h3>
       <div class="goal-paths">${pathHtml}</div>
     ` : ''}
+
+    ${renderGoalMathDetails({
+      cur, tgt, age, sex, act, heightCm, heightM,
+      curKg, tgtKg, lossKg, lossLb,
+      bmrKcal, tdee, dailyCalsRecommended, safeFloor,
+      curBmi, tgtBmi, minHealthyKg, maxHealthyKg,
+      proteinLow, proteinHigh, waterMlLow, waterMlHigh,
+      useCustom, customCals, customDeficit, customRateKgPerWeek,
+      customDaysLinear, customDaysAdaptive,
+      recDaysLinear, recDaysAdaptive,
+      weightUnit: g.weightUnit
+    })}
+  `;
+}
+
+function renderGoalMathDetails(m){
+  const f = (n, d=1) => Number.isFinite(n) ? n.toFixed(d) : '—';
+  const fi = (n) => Number.isFinite(n) ? Math.round(n) : '—';
+  const sexAdj = m.sex === 'female' ? '−161' : '+5';
+  const heightFt = m.heightM > 0 ? `${Math.floor(m.heightCm/2.54/12)}′ ${Math.round((m.heightCm/2.54)%12)}″` : '';
+  return `
+    <details class="math-details">
+      <summary>
+        <span class="math-tag">📐 SHOW THE MATH</span>
+        <span class="math-sum">Every number above — formula, values, and source. Click to expand.</span>
+      </summary>
+      <div class="math-body">
+
+        <div class="math-block">
+          <h4>1. Basal Metabolic Rate (BMR)</h4>
+          <div class="formula"><b>Mifflin-St Jeor (1990)</b> · gold standard, Academy of Nutrition &amp; Dietetics</div>
+          <div class="formula mono">BMR = 10 × kg + 6.25 × cm − 5 × age ${sexAdj}</div>
+          <div class="formula mono">BMR = 10 × ${f(m.curKg)} + 6.25 × ${f(m.heightCm,0)} − 5 × ${m.age} ${sexAdj}
+            <span class="eq">= <b>${fi(m.bmrKcal)} kcal/day</b></span></div>
+          <div class="note">Calories your body burns at complete rest (organs, basic cell function only).</div>
+        </div>
+
+        <div class="math-block">
+          <h4>2. Total Daily Energy Expenditure (TDEE)</h4>
+          <div class="formula"><b>BMR × Physical Activity Level (PAL)</b> · IOM/WHO standard</div>
+          <div class="formula mono">TDEE = BMR × ${m.act}
+            <span class="eq">= ${fi(m.bmrKcal)} × ${m.act} = <b>${fi(m.tdee)} kcal/day</b></span></div>
+          <div class="note">Total calories you burn per day given your activity. Eat this much → weight stays flat.</div>
+        </div>
+
+        <div class="math-block">
+          <h4>3. Daily Calorie Target</h4>
+          <div class="formula"><b>500 kcal/day deficit</b> · CDC's 0.5 kg / 1 lb-per-week recommendation</div>
+          <div class="formula mono">Target = max(${m.safeFloor}, TDEE − 500)
+            <span class="eq">= max(${m.safeFloor}, ${fi(m.tdee)} − 500) = <b>${m.dailyCalsRecommended} kcal/day</b></span></div>
+          <div class="note">Safe floor (${m.safeFloor} for ${m.sex}s) prevents medically unsafe deficits.</div>
+        </div>
+
+        <div class="math-block">
+          <h4>4. Body Mass Index (BMI)</h4>
+          <div class="formula"><b>WHO classification</b> · screening only, not a body-fat measurement</div>
+          <div class="formula mono">BMI = kg ÷ m²
+            <span class="eq">= ${f(m.curKg)} ÷ (${f(m.heightM,2)})² = <b>${f(m.curBmi)}</b></span></div>
+          <div class="formula mono">Healthy window at ${heightFt} (${f(m.heightCm,0)} cm) =
+            <b>${f(m.minHealthyKg)}–${f(m.maxHealthyKg)} kg</b> (BMI 18.5–24.9)</div>
+          <div class="note">If you carry significant muscle (you lift), BMI overestimates fat. Trust waist circumference + photos instead.</div>
+        </div>
+
+        <div class="math-block">
+          <h4>5. Linear (textbook) timeline</h4>
+          <div class="formula"><b>Wishnofsky 1958</b> · 1 kg fat ≈ 7,700 kcal (7,716 exact); 1 lb ≈ 3,500 kcal</div>
+          <div class="formula mono">days = total kg to lose ÷ (daily deficit ÷ 7,700) × 7</div>
+          <div class="formula mono">= ${f(m.lossKg)} ÷ (${m.useCustom && m.customDeficit>0 ? fi(m.customDeficit) : 500} ÷ 7,700) × 7
+            <span class="eq">= <b>${m.useCustom && m.customDeficit>0 ? m.customDaysLinear : m.recDaysLinear} days</b></span></div>
+          <div class="note warn">This is the textbook number you'll see on most apps — but it <b>overestimates</b> long-term loss because it assumes TDEE never drops as you get lighter.</div>
+        </div>
+
+        <div class="math-block">
+          <h4>6. Adaptive (realistic) timeline</h4>
+          <div class="formula"><b>Hall 2011 (NIH Body Weight Planner)</b> · recompute BMR/TDEE every week as weight drops</div>
+          <div class="formula mono">while weight &gt; target:
+            <br>&nbsp;&nbsp;BMR_week  = Mifflin(current weight)
+            <br>&nbsp;&nbsp;TDEE_week = BMR_week × ${m.act}
+            <br>&nbsp;&nbsp;intake    = ${m.useCustom && m.customDeficit>0 ? m.customCals + ' (fixed)' : 'max(' + m.safeFloor + ', TDEE_week − 500)'}
+            <br>&nbsp;&nbsp;weight   −= (TDEE_week − intake) × 7 ÷ 7,700</div>
+          <div class="formula mono"><span class="eq">Result: <b>${m.useCustom && m.customDeficit>0 ? m.customDaysAdaptive : m.recDaysAdaptive} days</b></span></div>
+          <div class="note">More honest: as you lose weight, your TDEE falls, so the same intake produces a smaller deficit. This is why people plateau.</div>
+        </div>
+
+        <div class="math-block">
+          <h4>7. Protein target</h4>
+          <div class="formula"><b>ISSN 2017 / ACSM</b> · upper end for weight loss to preserve muscle</div>
+          <div class="formula mono">Protein = 1.6–2.2 g × kg body weight
+            <span class="eq">= 1.6×${f(m.curKg)} to 2.2×${f(m.curKg)} = <b>${m.proteinLow}–${m.proteinHigh} g/day</b></span></div>
+          <div class="note">In a deficit, hitting this protein range is the single biggest lever for keeping muscle and feeling full.</div>
+        </div>
+
+        <div class="math-block">
+          <h4>8. Hydration</h4>
+          <div class="formula"><b>ACSM / European Food Safety Authority</b> · 30–35 mL/kg/day baseline</div>
+          <div class="formula mono">Water = 30–35 mL × kg body weight
+            <span class="eq">= ${m.waterMlLow}–${m.waterMlHigh} mL = <b>${(m.waterMlLow/1000).toFixed(1)}–${(m.waterMlHigh/1000).toFixed(1)} L/day</b></span></div>
+          <div class="note">Add ≈ 500 mL per hour of training, plus more in heat (Texas summer!). Your Water tab targets 4 L which covers training too.</div>
+        </div>
+
+        <div class="math-block">
+          <h4>Sources</h4>
+          <ul class="src-list">
+            <li>Mifflin MD, et al. <em>Am J Clin Nutr</em> 1990 — BMR equation</li>
+            <li>Institute of Medicine 2005 — PAL values 1.2–1.9</li>
+            <li>Wishnofsky M. <em>Am J Clin Nutr</em> 1958 — 7,700 kcal/kg rule (note: oversimplified long-term)</li>
+            <li>Hall KD, et al. <em>The Lancet</em> 2011 — Adaptive (dynamic) weight-loss model · NIH Body Weight Planner</li>
+            <li>WHO BMI classification (1995, updated 2004)</li>
+            <li>Jäger R, et al. <em>J Int Soc Sports Nutr</em> 2017 — Protein intake 1.6–2.2 g/kg</li>
+            <li>ACSM Position Stand on Hydration (Sawka 2007)</li>
+            <li>CDC: <em>Losing Weight</em> — 1–2 lb/wk safe rate</li>
+          </ul>
+        </div>
+
+      </div>
+    </details>
   `;
 }
 
