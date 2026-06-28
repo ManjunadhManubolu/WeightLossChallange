@@ -3,6 +3,9 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+<meta http-equiv="Pragma" content="no-cache" />
+<meta http-equiv="Expires" content="0" />
 <title>90-Day Food Challenge — Manjunath</title>
 <style>
   :root{
@@ -1027,6 +1030,36 @@
     border-top:1px solid rgba(255,255,255,0.08);
     background:rgba(11,16,35,0.5);
     margin-top:48px;backdrop-filter:blur(8px);
+  }
+
+  /* ===== UPDATE BANNER ===== */
+  #updateBanner{
+    position:fixed;bottom:18px;left:50%;transform:translateX(-50%);
+    z-index:999;display:inline-flex;align-items:center;gap:12px;
+    background:linear-gradient(135deg, var(--neon), var(--accent));
+    color:#0B1023;font-weight:800;font-size:13.5px;
+    padding:10px 14px 10px 16px;border-radius:999px;
+    box-shadow:0 14px 30px -8px rgba(34,211,238,0.5), 0 0 0 1px rgba(255,255,255,0.25) inset;
+    animation:ubSlide .4s cubic-bezier(.2,.8,.2,1);
+  }
+  #updateBanner .ub-dot{
+    width:9px;height:9px;border-radius:50%;background:#0B1023;
+    box-shadow:0 0 0 3px rgba(11,16,35,0.18);
+    animation:pulseLite 1.4s ease-in-out infinite;
+  }
+  #updateBanner .ub-btn{
+    background:#0B1023;color:#fff;border:0;padding:6px 14px;
+    border-radius:999px;font-weight:800;font-size:12.5px;cursor:pointer;
+    font-family:inherit;
+  }
+  #updateBanner .ub-btn:hover{background:#171C3B}
+  #updateBanner .ub-x{
+    background:transparent;border:0;color:#0B1023;cursor:pointer;
+    font-size:20px;line-height:1;padding:0 4px;font-weight:700;
+  }
+  @keyframes ubSlide{
+    from{transform:translate(-50%, 30px);opacity:0}
+    to  {transform:translate(-50%, 0);opacity:1}
   }
 
   /* ===== GOAL MATH DETAILS ===== */
@@ -4235,7 +4268,50 @@ ensureCurrentWeek();
 renderAll();
 scheduleMidnightRefresh();
 /* Re-check on tab focus too (handles laptop sleep across days) */
-document.addEventListener('visibilitychange', () => { if (!document.hidden) renderAll(); });
+document.addEventListener('visibilitychange', () => { if (!document.hidden) { renderAll(); checkForUpdate(true); } });
+
+/* =====================================================================
+   UPDATE NOTIFIER — polls the GitHub raw file and prompts a hard refresh
+   when a new commit has shipped. Works around stale browser/CDN caches.
+   ===================================================================== */
+const APP_VERSION_URL = 'https://api.github.com/repos/ManjunadhManubolu/WeightLossChallange/commits/main';
+let _lastKnownSha = null;
+async function checkForUpdate(silent){
+  try {
+    const res = await fetch(APP_VERSION_URL + '?cb=' + Date.now(), { cache: 'no-store' });
+    if (!res.ok) return;
+    const j = await res.json();
+    const sha = j && j.sha;
+    if (!sha) return;
+    if (!_lastKnownSha) { _lastKnownSha = sha; return; }
+    if (sha !== _lastKnownSha){
+      _lastKnownSha = sha;
+      showUpdateBanner();
+    }
+  } catch(e){ /* offline / rate-limited — ignore */ }
+}
+function showUpdateBanner(){
+  if (document.getElementById('updateBanner')) return;
+  const b = document.createElement('div');
+  b.id = 'updateBanner';
+  b.innerHTML = `
+    <span class="ub-dot"></span>
+    <span class="ub-msg">A newer version is live</span>
+    <button class="ub-btn" id="ubReload">Reload now</button>
+    <button class="ub-x" id="ubClose" title="Dismiss">×</button>
+  `;
+  document.body.appendChild(b);
+  document.getElementById('ubReload').onclick = () => {
+    // Bypass cache: cache-busting query + reload(true)-equivalent
+    const u = new URL(location.href);
+    u.searchParams.set('v', Date.now());
+    location.replace(u.toString());
+  };
+  document.getElementById('ubClose').onclick = () => b.remove();
+}
+// Kick off: capture initial SHA, then poll every 2 minutes
+checkForUpdate(true);
+setInterval(() => checkForUpdate(true), 120000);
 
 /* =====================================================================
    UX SPARKLE — cursor-tracking glow on cards + check celebration
