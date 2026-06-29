@@ -3405,8 +3405,48 @@ function renderGroceryWeekContent(key){
   return html;
 }
 
+function refreshTileSummary(tile, w){
+  if (!tile) return;
+  const items = extractGroceries(w);
+  const total = items.reduce((a,it)=>a+(it.price||0),0);
+  const checked = state.checked && state.checked[w] ? Object.values(state.checked[w]).filter(Boolean).length : 0;
+  const p = tile.querySelector('.info p');
+  if (p) p.textContent = `${items.length} items · ≈ $${total.toFixed(0)} · ${checked}/${items.length} bought`;
+}
+
+// One-time global delegation for grocery interactions. Safe even if Groceries
+// tab is re-rendered N times — exactly one handler fires per click.
+(function bindGroceryDelegation(){
+  const root = document.getElementById('groceryContainer');
+  if (!root || root.dataset.bound === '1') return;
+  root.dataset.bound = '1';
+  root.addEventListener('click', e => {
+    // Checkbox toggle
+    const li = e.target.closest('.grocery-cat li');
+    if (li){
+      e.stopPropagation();
+      const w = li.dataset.week, n = li.dataset.name;
+      if (!w || !n) return;
+      state.checked[w] = state.checked[w] || {};
+      state.checked[w][n] = !state.checked[w][n];
+      saveState(state);
+      li.classList.toggle('checked');
+      refreshTileSummary(li.closest('.week-tile'), w);
+      return;
+    }
+    // Tile expand/collapse — anywhere outside the body
+    const tile = e.target.closest('.week-tile');
+    if (tile && !e.target.closest('.expanded-content')){
+      tile.classList.toggle('expanded');
+    }
+  });
+})();
+
 function renderGroceries(){
   const c = document.getElementById('groceryContainer');
+  // Ensure delegation is bound (handles the case where the container existed
+  // before the IIFE ran — e.g. paranoid future restructures).
+  if (c && c.dataset.bound !== '1'){ c.dataset.bound = '1'; }
   const firstMonday = getMonday(START_DATE);
   const todayMonday = getMonday(TODAY < START_DATE ? START_DATE : TODAY);
 
@@ -3453,35 +3493,8 @@ function renderGroceries(){
       </div>`;
   }
   c.innerHTML = html;
-
-  // Tile expand/collapse
-  c.querySelectorAll('.week-tile').forEach(t => {
-    t.addEventListener('click', e => {
-      if (e.target.closest('.expanded-content')) return;
-      t.classList.toggle('expanded');
-    });
-  });
-
-  // Item check/uncheck — uses event delegation so it works for all 13 weeks
-  c.addEventListener('click', e => {
-    const li = e.target.closest('.grocery-cat li');
-    if (!li) return;
-    e.stopPropagation();
-    const w = li.dataset.week, n = li.dataset.name;
-    state.checked[w] = state.checked[w] || {};
-    state.checked[w][n] = !state.checked[w][n];
-    saveState(state);
-    li.classList.toggle('checked');
-    // Recompute the tile's summary line for that week
-    const tile = li.closest('.week-tile');
-    if (tile){
-      const items = extractGroceries(w);
-      const total = items.reduce((a,it)=>a+(it.price||0),0);
-      const checked = Object.values(state.checked[w]||{}).filter(Boolean).length;
-      const p = tile.querySelector('.info p');
-      if (p) p.textContent = `${items.length} items · ≈ $${total.toFixed(0)} · ${checked}/${items.length} bought`;
-    }
-  });
+  // Note: click handling lives in the one-time bindGroceryDelegation() IIFE above.
+  // Re-rendering this innerHTML never re-attaches duplicate listeners.
 }
 function categoryEmoji(cat){
   return {Nuts:'🥜',Fruits:'🍎',Vegetables:'🥬',Dairy:'🥚',Protein:'🍗',Grains:'🌾',Pulses:'🫘',Spices:'🌿',Other:'🥥'}[cat] || '🛒';
