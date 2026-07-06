@@ -2031,6 +2031,91 @@ function makeSundayW4(){
   };
 }
 
+/* Week 5 — Jul 6 to Jul 12, 2026.
+   Dietitian provided Mon-Wed only; Thu-Sun mirror the corresponding day from Week 4. */
+function makeMondayW5(){
+  return {
+    preWorkout:  [
+      {q:'10',          name:'Badam',                src:SRC_DIET},
+      {q:'2',           name:'Walnuts',              src:SRC_DIET}
+    ],
+    postWorkout: [
+      {q:'30g protein', name:'Protein Shake',        src:SRC_DIET},
+      {q:'1 medium',    name:'Apple',                src:SRC_DIET}
+    ],
+    brunchLunch: [
+      {q:'2',           name:'Whole Eggs',           src:SRC_DIET},
+      {q:'2',           name:'Idly',                 src:SRC_DIET},
+      {q:'2 tbsp',      name:'Peanut Chutney',       src:SRC_DIET},
+      {q:'1 bowl',      name:'Green Moong Sprouts',  src:SRC_DIET},
+      {q:'1 bowl',      name:'Cucumber, Carrot & Tomato Salad', src:SRC_DIET}
+    ],
+    dinner: [
+      {q:'2',           name:'Chapati',              src:SRC_DIET},
+      {q:'75g dry',     name:'Soya Chunks Bhurji',   src:SRC_DIET},
+      {q:'1 cup',       name:'Ladies Finger Poriyal',src:SRC_DIET}
+    ],
+    snacks: [
+      {q:'200g',        name:'Greek Yogurt',         src:SRC_DIET},
+      {q:'1 medium',    name:'Guava',                src:SRC_DIET}
+    ]
+  };
+}
+function makeTuesdayW5(){
+  return {
+    preWorkout:  [
+      {q:'5',           name:'Pista',                src:SRC_DIET},
+      {q:'1',           name:'Anjeer',               src:SRC_DIET}
+    ],
+    postWorkout: [
+      {q:'1 scoop',     name:'Protein Shake',        src:SRC_REC},
+      {q:'1 medium',    name:'Orange',               src:SRC_DIET}
+    ],
+    brunchLunch: [
+      {q:'2',           name:'Whole Eggs',           src:SRC_DIET},
+      {q:'75g dry',     name:'White Channa Curry',   src:SRC_DIET},
+      {q:'1 cup',       name:'Carrot & Beans Poriyal', src:SRC_DIET}
+    ],
+    dinner: [
+      {q:'2',           name:'Dosa',                 src:SRC_DIET},
+      {q:'150g',        name:'Chicken',              src:SRC_DIET},
+      {q:'1 bowl',      name:'Mixed Vegetable Salad',src:SRC_DIET}
+    ],
+    snacks: [
+      {q:'200g',        name:'Greek Yogurt',         src:SRC_DIET},
+      {q:'~75g',        name:'Berries',              src:SRC_DIET}
+    ]
+  };
+}
+function makeWednesdayW5(){
+  return {
+    preWorkout:  [
+      {q:'1 tbsp',      name:'Pumpkin Seeds',        src:SRC_DIET},
+      {q:'1 tbsp',      name:'Sunflower Seeds',      src:SRC_DIET}
+    ],
+    postWorkout: [
+      {q:'1 scoop',     name:'Protein Shake',        src:SRC_REC},
+      {q:'1 medium',    name:'Guava',                src:SRC_DIET}
+    ],
+    brunchLunch: [
+      {q:'2',           name:'Boiled Eggs',          src:SRC_DIET},
+      {q:'2',           name:'Dosa',                 src:SRC_DIET},
+      {q:'2 tbsp',      name:'Bottle Gourd Chutney', src:SRC_DIET},
+      {q:'1 bowl',      name:'Vegetable Salad',      src:SRC_DIET}
+    ],
+    dinner: [
+      {q:'75g',         name:'Whole Wheat Pasta (White Sauce)', src:SRC_DIET},
+      {q:'175g',        name:'Paneer',               src:SRC_DIET},
+      {q:'15g',         name:'Cashews (for sauce)',  src:SRC_DIET},
+      {q:'1 bowl',      name:'Broccoli & Bell Peppers', src:SRC_DIET}
+    ],
+    snacks: [
+      {q:'200g',        name:'Greek Yogurt',         src:SRC_DIET},
+      {q:'1 bowl',      name:'Mixed Vegetable Soup', src:SRC_DIET}
+    ]
+  };
+}
+
 /* ---------- WEEKLY TRAINER CHALLENGES ---------- */
 /* Add a new entry each week with the week-start ISO date. UI auto-shows on Today + This Week. */
 const WEEKLY_CHALLENGES = {
@@ -2132,6 +2217,19 @@ SEED_DATA = {
     ],
     uploadedAt: new Date().toISOString(),
     sourceFile: 'Personalized Diet Chart - Manjunath.xlsx (week of Jun 29)'
+  },
+  '2026-07-06': {
+    days: [
+      { date:'2026-07-06', day:'Monday',    items: makeMondayW5() },
+      { date:'2026-07-07', day:'Tuesday',   items: makeTuesdayW5() },
+      { date:'2026-07-08', day:'Wednesday', items: makeWednesdayW5() },
+      { date:'2026-07-09', day:'Thursday',  items: makeThursdayW4() },
+      { date:'2026-07-10', day:'Friday',    items: makeFridayW4() },
+      { date:'2026-07-11', day:'Saturday',  items: makeSaturdayW4() },
+      { date:'2026-07-12', day:'Sunday',    items: makeSundayW4() }
+    ],
+    uploadedAt: new Date().toISOString(),
+    sourceFile: 'Personalized Diet Chart - Manjunath (2).xlsx — Mon–Wed from dietitian; Thu–Sun mirror Week 4'
   }
 };
 
