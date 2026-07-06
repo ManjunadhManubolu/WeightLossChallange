@@ -2222,14 +2222,10 @@ SEED_DATA = {
     days: [
       { date:'2026-07-06', day:'Monday',    items: makeMondayW5() },
       { date:'2026-07-07', day:'Tuesday',   items: makeTuesdayW5() },
-      { date:'2026-07-08', day:'Wednesday', items: makeWednesdayW5() },
-      { date:'2026-07-09', day:'Thursday',  items: makeThursdayW4() },
-      { date:'2026-07-10', day:'Friday',    items: makeFridayW4() },
-      { date:'2026-07-11', day:'Saturday',  items: makeSaturdayW4() },
-      { date:'2026-07-12', day:'Sunday',    items: makeSundayW4() }
+      { date:'2026-07-08', day:'Wednesday', items: makeWednesdayW5() }
     ],
     uploadedAt: new Date().toISOString(),
-    sourceFile: 'Personalized Diet Chart - Manjunath (2).xlsx — Mon–Wed from dietitian; Thu–Sun mirror Week 4'
+    sourceFile: 'Personalized Diet Chart - Manjunath (2).xlsx — Mon–Wed only (Thu–Sun awaiting dietitian)'
   }
 };
 
@@ -2239,11 +2235,17 @@ function loadState(){
     if (raw) {
       const s = JSON.parse(raw);
       s.weeks = s.weeks || {};
-      let added = false;
+      let changed = false;
       for (const k of Object.keys(SEED_DATA)) {
-        if (!s.weeks[k]) { s.weeks[k] = SEED_DATA[k]; added = true; }
+        const stored = s.weeks[k];
+        const seed   = SEED_DATA[k];
+        // Missing week → add it. Sourced-plan changed (different sourceFile) → replace it.
+        // We match on sourceFile so re-uploads from the dietitian trigger a refresh,
+        // but user-added weeks (no sourceFile match) stay untouched.
+        if (!stored) { s.weeks[k] = seed; changed = true; }
+        else if (stored.sourceFile !== seed.sourceFile) { s.weeks[k] = seed; changed = true; }
       }
-      if (added) saveState(s);
+      if (changed) saveState(s);
       return s;
     }
   } catch(e){}
