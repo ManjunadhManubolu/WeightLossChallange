@@ -2098,8 +2098,8 @@ function makeWednesdayW5(){
       {q:'1 medium',    name:'Guava',                src:SRC_DIET}
     ],
     brunchLunch: [
-      {q:'2',           name:'Boiled Eggs',          src:SRC_DIET},
-      {q:'2',           name:'Dosa',                 src:SRC_DIET},
+      {q:'3',           name:'Boiled Eggs',          src:SRC_DIET},
+      {q:'1-2',         name:'Dosa',                 src:SRC_DIET},
       {q:'2 tbsp',      name:'Bottle Gourd Chutney', src:SRC_DIET},
       {q:'1 bowl',      name:'Vegetable Salad',      src:SRC_DIET}
     ],
@@ -2112,6 +2112,109 @@ function makeWednesdayW5(){
     snacks: [
       {q:'200g',        name:'Greek Yogurt',         src:SRC_DIET},
       {q:'1 bowl',      name:'Mixed Vegetable Soup', src:SRC_DIET}
+    ]
+  };
+}
+function makeThursdayW5(){
+  return {
+    preWorkout:  [
+      {q:'1',           name:'Brazil Nut',           src:SRC_DIET},
+      {q:'1 tsp',       name:'Mixed Seeds',          src:SRC_DIET}
+    ],
+    postWorkout: [
+      {q:'1 scoop',     name:'Protein Shake',        src:SRC_REC},
+      {q:'~150g',       name:'Papaya',               src:SRC_DIET}
+    ],
+    brunchLunch: [
+      {q:'1-2',         name:'Paneer Paratha',       src:SRC_DIET},
+      {q:'150g',        name:'Paneer (in paratha)',  src:SRC_DIET},
+      {q:'1 bowl',      name:'Salad',                src:SRC_DIET}
+    ],
+    dinner: [
+      {q:'1 bowl',      name:'Mixed Veg Pulao',      src:SRC_DIET},
+      {q:'75g dry',     name:'Soya Chunks (dry starter)', src:SRC_DIET}
+    ],
+    snacks: [
+      {q:'200g',        name:'Greek Yogurt',         src:SRC_DIET},
+      {q:'~75g',        name:'Berries',              src:SRC_DIET}
+    ]
+  };
+}
+function makeFridayW5(){
+  return {
+    preWorkout:  [
+      {q:'¼',           name:'Avocado',              src:SRC_DIET}
+    ],
+    postWorkout: [
+      {q:'1 scoop',     name:'Protein Shake',        src:SRC_REC},
+      {q:'½ medium',    name:'Pomegranate',          src:SRC_DIET}
+    ],
+    brunchLunch: [
+      {q:'3',           name:'Whole Eggs (in sandwich)', src:SRC_DIET},
+      {q:'2 slices',    name:'Whole Wheat Bread (sandwich)', src:SRC_REC},
+      {q:'1 bowl',      name:'Lettuce + Onion + Tomato + Corn', src:SRC_DIET}
+    ],
+    dinner: [
+      {q:'½ cup',       name:'Brown Rice',           src:SRC_SERV},
+      {q:'1 cup',       name:'Spinach Dal',          src:SRC_DIET},
+      {q:'150g',        name:'Chicken',              src:SRC_DIET},
+      {q:'1 cup',       name:'Ladies Finger Poriyal',src:SRC_DIET}
+    ],
+    snacks: [
+      {q:'200g',        name:'Greek Yogurt',         src:SRC_DIET},
+      {q:'1 medium',    name:'Guava',                src:SRC_DIET}
+    ]
+  };
+}
+function makeSaturdayW5(){
+  return {
+    preWorkout:  [
+      {q:'1 small slice', name:'Coconut',            src:SRC_DIET},
+      {q:'5',           name:'Badam',                src:SRC_DIET},
+      {q:'1 tsp',       name:'Flax Seeds',           src:SRC_DIET}
+    ],
+    postWorkout: [
+      {q:'1 scoop',     name:'Protein Shake',        src:SRC_REC},
+      {q:'1 medium',    name:'Banana',               src:SRC_DIET}
+    ],
+    brunchLunch: [
+      {q:'2',           name:'Boiled Eggs',          src:SRC_DIET},
+      {q:'2',           name:'Dosa',                 src:SRC_DIET},
+      {q:'2 tbsp',      name:'Bottle Gourd Chutney', src:SRC_DIET},
+      {q:'1 bowl',      name:'Vegetable Salad',      src:SRC_DIET}
+    ],
+    dinner: [
+      {q:'1 bowl',      name:'Sambar Rice with Veggies (carrot, brinjal, radish, ash gourd, drumstick)', src:SRC_DIET},
+      {q:'150g',        name:'Dry Chicken',          src:SRC_DIET}
+    ],
+    snacks: [
+      {q:'200g',        name:'Greek Yogurt',         src:SRC_DIET},
+      {q:'1 bowl',      name:'Tomato Soup',          src:SRC_DIET}
+    ]
+  };
+}
+function makeSundayW5(){
+  return {
+    preWorkout:  [
+      {q:'10',          name:'Badam',                src:SRC_DIET},
+      {q:'2',           name:'Walnuts',              src:SRC_DIET}
+    ],
+    postWorkout: [
+      {q:'1 scoop',     name:'Protein Shake',        src:SRC_REC},
+      {q:'1 medium',    name:'Guava',                src:SRC_DIET}
+    ],
+    brunchLunch: [
+      {q:'3',           name:'Boiled Eggs',          src:SRC_DIET},
+      {q:'1 large bowl', name:'Mixed Veggies Bowl with Crunchy Peanuts', src:SRC_DIET}
+    ],
+    dinner: [
+      {q:'75g dry',     name:'White Channa',         src:SRC_DIET},
+      {q:'1 bowl',      name:'Mixed Vegetable Salad',src:SRC_DIET}
+    ],
+    snacks: [
+      {q:'200g',        name:'Greek Yogurt',         src:SRC_DIET},
+      {q:'1 medium',    name:'Apple',                src:SRC_DIET},
+      {q:'¼ tsp',       name:'Cinnamon',             src:SRC_DIET}
     ]
   };
 }
@@ -2222,10 +2325,14 @@ SEED_DATA = {
     days: [
       { date:'2026-07-06', day:'Monday',    items: makeMondayW5() },
       { date:'2026-07-07', day:'Tuesday',   items: makeTuesdayW5() },
-      { date:'2026-07-08', day:'Wednesday', items: makeWednesdayW5() }
+      { date:'2026-07-08', day:'Wednesday', items: makeWednesdayW5() },
+      { date:'2026-07-09', day:'Thursday',  items: makeThursdayW5() },
+      { date:'2026-07-10', day:'Friday',    items: makeFridayW5() },
+      { date:'2026-07-11', day:'Saturday',  items: makeSaturdayW5() },
+      { date:'2026-07-12', day:'Sunday',    items: makeSundayW5() }
     ],
     uploadedAt: new Date().toISOString(),
-    sourceFile: 'Personalized Diet Chart - Manjunath (2).xlsx — Mon–Wed only (Thu–Sun awaiting dietitian)'
+    sourceFile: 'Personalized Diet Chart - Manjunath (3).xlsx (full week Jul 6–12)'
   }
 };
 
@@ -3248,7 +3355,50 @@ const GROCERY_DB = {
   'Veggies':                 { cat:'Vegetables', qty:'(generic mixed veg — already covered)', store:'—',    price:0, skip:true },
   'Corn & Vegetable Salad':  { cat:'Vegetables', qty:'sweet corn + bell pepper + onion + cilantro', store:'Walmart', price:5.00 },
   'Vegetable Soup':          { cat:'Vegetables', qty:'mixed soup veg',    store:'Walmart',                  price:4.00 },
-  'Soup — Tomato or Mushroom':{ cat:'Vegetables', qty:'1 lb tomato or 8oz mushrooms', store:'Walmart',      price:4.00 }
+  'Soup — Tomato or Mushroom':{ cat:'Vegetables', qty:'1 lb tomato or 8oz mushrooms', store:'Walmart',      price:4.00 },
+
+  /* Week-5 additions (Jul 6–12) — real physical ingredients you need to buy */
+  'Orange':                  { cat:'Fruits',     qty:'2 medium',          store:'Walmart / Tom Thumb',      price:3.00 },
+  'Whole Wheat Bread':       { cat:'Grains',     qty:'1 small loaf',      store:'Walmart',                  price:3.50 },
+  'Whole Wheat Pasta':       { cat:'Grains',     qty:'12 oz box',         store:'Walmart',                  price:2.00 },
+  'Cashews':                 { cat:'Nuts',       qty:'4-6 oz bag',        store:'Sprouts / Costco',         price:5.00 },
+  'Ladies Finger':           { cat:'Vegetables', qty:'~1 lb okra',        store:'Patel Brothers',           price:3.00 },
+  'Spinach Dal':             { cat:'Pulses',     qty:'1 bunch spinach + ½ lb toor dal', store:'Patel Brothers', price:5.00 },
+  'White Channa':            { cat:'Pulses',     qty:'1 lb dry chickpeas',store:'Patel Brothers',           price:3.00 },
+  'Bottle Gourd':            { cat:'Vegetables', qty:'1 medium (~1 lb)',  store:'Patel Brothers',           price:3.00 },
+  'Green Moong Sprouts':     { cat:'Pulses',     qty:'8 oz whole moong (sprouted)', store:'Patel Brothers', price:2.50 },
+  'Sambar Rice':             { cat:'Vegetables', qty:'sambar mix + mixed veg (carrot, brinjal, radish, ash gourd, drumstick)', store:'Patel Brothers', price:6.00 },
+  'Broccoli':                { cat:'Vegetables', qty:'1 head (~12 oz)',   store:'Walmart',                  price:3.00 },
+  'Bell Peppers':            { cat:'Vegetables', qty:'2-3 mixed colors',  store:'Walmart',                  price:4.00 },
+  'Beans':                   { cat:'Vegetables', qty:'~½ lb green beans', store:'Walmart',                  price:2.50 },
+
+  /* Composite/prepared entries — kept as their own grocery row so the shopping
+     list stays actionable (each row maps to a real shopping decision).
+     They are NOT marked skip, so they aggregate meal counts correctly. */
+  'Bottle Gourd Chutney':    { cat:'Vegetables', qty:'1 bottle gourd + coconut',        store:'Patel Brothers', price:3.50 },
+  'Ladies Finger Poriyal':   { cat:'Vegetables', qty:'~1 lb okra',                      store:'Patel Brothers', price:3.00 },
+  'Carrot & Beans Poriyal':  { cat:'Vegetables', qty:'carrots + green beans (~½ lb ea)',store:'Walmart',       price:4.00 },
+  'White Channa Curry':      { cat:'Pulses',     qty:'1 lb dry chickpeas',              store:'Patel Brothers', price:3.00 },
+  'Soya Chunks Bhurji':      { cat:'Protein',    qty:'200g soya chunks',                store:'Patel Brothers', price:2.50 },
+  'Mixed Veg Pulao':         { cat:'Grains',     qty:'brown rice + mixed veg (~1 lb)',  store:'Walmart / Patel', price:6.00 },
+  'Mixed Vegetable Salad':   { cat:'Vegetables', qty:'mixed salad veg (~1 lb)',         store:'Walmart',       price:6.00 },
+  'Vegetable Salad':         { cat:'Vegetables', qty:'mixed salad veg (~1 lb)',         store:'Walmart',       price:5.00 },
+  'Cucumber, Carrot & Tomato Salad':{cat:'Vegetables', qty:'cucumber + carrot + tomato', store:'Walmart',      price:5.00 },
+  'Mixed Veggies Bowl with Crunchy Peanuts':{cat:'Vegetables', qty:'mixed veg + roasted peanuts', store:'Walmart', price:6.00 },
+  'Mixed Vegetable Soup':    { cat:'Vegetables', qty:'mixed soup veg',                   store:'Walmart',       price:4.00 },
+  'Tomato Soup':             { cat:'Vegetables', qty:'~1 lb tomatoes',                   store:'Walmart',       price:3.00 },
+
+  /* Pure aliases — same physical ingredient, different meal-plan name (skip is correct here). */
+  'Boiled Eggs':             { cat:'Dairy',      qty:'(uses whole eggs — already on list)',                    store:'—', price:0, skip:true },
+  'Whole Eggs (in sandwich)':{ cat:'Dairy',      qty:'(uses whole eggs — already on list)',                    store:'—', price:0, skip:true },
+  'Whole Wheat Bread (sandwich)':{ cat:'Grains', qty:'(uses whole wheat bread — already on list)',             store:'—', price:0, skip:true },
+  'Paneer (in paratha)':     { cat:'Dairy',      qty:'(uses paneer — already on list)',                        store:'—', price:0, skip:true },
+  'Paneer Paratha':          { cat:'Grains',     qty:'(uses paneer + atta — already on list)',                 store:'—', price:0, skip:true },
+  'Soya Chunks (dry starter)':{cat:'Protein',    qty:'(uses soya chunks — already on list)',                   store:'—', price:0, skip:true },
+  'Dry Chicken':             { cat:'Protein',    qty:'(uses chicken — already on list)',                       store:'—', price:0, skip:true },
+  'Whole Wheat Pasta (White Sauce)':{cat:'Grains', qty:'(uses whole wheat pasta — already on list)',           store:'—', price:0, skip:true },
+  'Cashews (for sauce)':     { cat:'Nuts',       qty:'(uses cashews — already on list)',                       store:'—', price:0, skip:true },
+  'Broccoli & Bell Peppers': { cat:'Vegetables', qty:'(uses broccoli + bell peppers — already on list)',       store:'—', price:0, skip:true }
 };
 
 function lookupGrocery(name){
