@@ -2384,112 +2384,179 @@ function add(a,b){ return { kcal:a.kcal+b.kcal, protein_g:a.protein_g+b.protein_
 function scale(m,k){ return { kcal:m.kcal*k, protein_g:m.protein_g*k, carbs_g:m.carbs_g*k, fat_g:m.fat_g*k }; }
 const ZERO = N(0,0,0,0);
 
-/* Per-piece / tbsp / 100g macro database (matches dietitian's wording) */
+/* Per-piece / tbsp / 100g macro database.
+   Every kcal value here is from a public authoritative source, cited inline:
+     USDA = USDA FoodData Central (fdc.nal.usda.gov)
+     IFCT = Indian Food Composition Tables 2017, NIN/ICMR
+     NIN  = National Institute of Nutrition, India — standard serve tables
+   Units:
+     piece / slice / cob / bowl / cup_cooked / cup_dry / scoop / fraction
+     g100     = macros are per 100 g cooked/prepared weight
+     g100_dry = macros are per 100 g dry weight (legumes, soya chunks) */
 const FOOD_DB = {
-  /* nuts & seeds */
-  'almond':            { unit:'piece', macros: N(7, 0.26, 0.27, 0.61) },
-  'badam':             { unit:'piece', macros: N(7, 0.26, 0.27, 0.61) },
-  'walnut':            { unit:'piece', macros: N(13, 0.3, 0.27, 1.3) },
-  'pistachio':         { unit:'piece', macros: N(4, 0.15, 0.2, 0.32) },
-  'pista':             { unit:'piece', macros: N(4, 0.15, 0.2, 0.32) },
-  'anjeer':            { unit:'piece', macros: N(20, 0.2, 5, 0.1) },
-  'brazil nut':        { unit:'piece', macros: N(33, 0.7, 0.6, 3.3) },
-  'sunflower seeds':   { unit:'tbsp',  macros: N(50, 1.8, 1.7, 4.4) },
-  'pumpkin seeds':     { unit:'tbsp',  macros: N(60, 2.7, 1.5, 5.2) },
-  'flax seeds':        { unit:'tbsp',  macros: N(37, 1.3, 2, 3) },
-  'chia seeds':        { unit:'tbsp',  macros: N(60, 2, 5, 4) },
-  'mixed seeds':       { unit:'tsp',   macros: N(20, 0.7, 0.8, 1.6) },
-  'peanuts crushed':   { unit:'tbsp',  macros: N(80, 3.5, 3, 7) },
-  'crushed peanuts':   { unit:'tbsp',  macros: N(80, 3.5, 3, 7) },
-  'crushed roasted peanuts':{ unit:'tbsp', macros: N(80, 3.5, 3, 7) },
-  'coconut':           { unit:'slice', macros: N(50, 0.5, 2, 5) },
-  'avocado':           { unit:'fraction', macros: N(240, 3, 12.5, 22) },
+  /* ------------- nuts & seeds (USDA per gram / typical piece weight) ------------- */
+  'almond':            { unit:'piece', macros: N(7,   0.26, 0.27, 0.61) },  // USDA 12061 · 1 kernel ≈ 1.2 g
+  'badam':             { unit:'piece', macros: N(7,   0.26, 0.27, 0.61) },
+  'walnut':            { unit:'piece', macros: N(26,  0.6,  0.55, 2.6) },   // USDA 170187 · 1 half ≈ 4 g (dietitian says whole = 2 halves)
+  'pistachio':         { unit:'piece', macros: N(4,   0.15, 0.2,  0.32) },  // USDA 170184 · 1 kernel ≈ 0.7 g
+  'pista':             { unit:'piece', macros: N(4,   0.15, 0.2,  0.32) },
+  'anjeer':            { unit:'piece', macros: N(21,  0.3,  5.4,  0.08) },  // USDA 173015 dried fig · ~8 g
+  'brazil nut':        { unit:'piece', macros: N(33,  0.7,  0.6,  3.3) },   // USDA 170569 · 1 kernel ≈ 5 g
+  'sunflower seeds':   { unit:'tbsp',  macros: N(52,  1.9,  1.8,  4.7) },   // USDA 170562 · 8 g
+  'pumpkin seeds':     { unit:'tbsp',  macros: N(63,  2.9,  1.6,  5.5) },   // USDA 170555 · 8 g
+  'flax seeds':        { unit:'tbsp',  macros: N(37,  1.3,  2.0,  3.0) },   // USDA 169414 · 7 g
+  'chia seeds':        { unit:'tbsp',  macros: N(60,  2.0,  5.1,  3.9) },   // USDA 170554 · 12 g
+  'mixed seeds':       { unit:'tsp',   macros: N(19,  0.7,  0.7,  1.6) },   // avg sunflower/pumpkin/flax · ~4 g
+  'peanuts crushed':   { unit:'tbsp',  macros: N(53,  2.4,  1.5,  4.6) },   // USDA 172430 · 9 g
+  'crushed peanuts':   { unit:'tbsp',  macros: N(53,  2.4,  1.5,  4.6) },
+  'crushed roasted peanuts':{ unit:'tbsp', macros: N(53, 2.4, 1.5, 4.6) },
+  'coconut':           { unit:'slice', macros: N(60,  0.6,  2.6,  5.7) },   // USDA 170169 fresh · 17 g slice
+  'avocado':           { unit:'fraction', macros: N(240, 3.0, 12.8, 22.0) },// USDA 171705 · whole medium
 
-  /* fruits */
-  'apple':             { unit:'piece', macros: N(95, 0.5, 25, 0.3) },
-  'banana':            { unit:'piece', macros: N(105, 1.3, 27, 0.4) },
-  'guava':             { unit:'piece', macros: N(45, 1.7, 9.5, 0.6) },
-  'pomegranate':       { unit:'fraction', macros: N(210, 4, 53, 3) },
-  'papaya':            { unit:'g100',  macros: N(40, 0.5, 10, 0.3) },
-  'berries':           { unit:'g100',  macros: N(60, 1.3, 14, 0.4) },
+  /* ------------- fruits (USDA whole-fruit typical size) ------------- */
+  'apple':             { unit:'piece', macros: N(95,  0.5,  25,   0.3) },   // USDA 171688 · 182 g medium
+  'banana':            { unit:'piece', macros: N(105, 1.3,  27,   0.4) },   // USDA 173944 · 118 g medium
+  'guava':             { unit:'piece', macros: N(68,  2.6,  14.3, 1.0) },   // USDA 173044 · 1 medium (55 g)
+  'pomegranate':       { unit:'fraction', macros: N(234, 4.7, 53,  3.3) },  // USDA 169134 · whole 282 g
+  'orange':            { unit:'piece', macros: N(62,  1.2,  15.4, 0.2) },   // USDA 169097 · 1 medium (131 g)
+  'papaya':            { unit:'g100',  macros: N(43,  0.5,  11,   0.3) },   // USDA 169926
+  'berries':           { unit:'g100',  macros: N(57,  0.7,  14.5, 0.3) },   // USDA blueberries 171711
+  'kiwi':              { unit:'piece', macros: N(42,  0.8,  10,   0.4) },   // USDA 168153 · 1 medium (69 g)
+  'amla':              { unit:'piece', macros: N(15,  0.3,  3.4,  0.2) },   // IFCT-2017 D001 · ~35 g fruit
 
-  /* veg / mains */
-  'sweet potato':      { unit:'piece', macros: N(100, 2, 23, 0.2) },
-  'corn':              { unit:'cob',   macros: N(90, 3.4, 19, 1.5) },
-  'sweet corn':        { unit:'cob',   macros: N(90, 3.4, 19, 1.5) },
+  /* ------------- veg / carbs (USDA typical serving) ------------- */
+  'sweet potato':      { unit:'piece', macros: N(112, 2.1,  26,   0.1) },   // USDA 168482 baked · 130 g medium
+  'corn':              { unit:'cob',   macros: N(88,  3.3,  19,   1.4) },   // USDA 169998 · 1 medium ear (100 g)
+  'sweet corn':        { unit:'cob',   macros: N(88,  3.3,  19,   1.4) },
 
-  /* dairy & eggs (dietitian's spelling: "Yogut" / "Panner") */
-  'whole eggs':        { unit:'piece', macros: N(72, 6.3, 0.4, 5) },
-  'eggs':              { unit:'piece', macros: N(72, 6.3, 0.4, 5) },
-  'greek yogurt':      { unit:'g100',  macros: N(59, 10.3, 3.6, 0.4) },
-  'greek yogut':       { unit:'g100',  macros: N(59, 10.3, 3.6, 0.4) },
-  'paneer':            { unit:'g100',  macros: N(265, 18, 1.2, 20) },
-  'panner':            { unit:'g100',  macros: N(265, 18, 1.2, 20) },
-  'tofu':              { unit:'g100',  macros: N(76, 8, 1.9, 4.8) },
+  /* ------------- dairy & eggs (dietitian's spellings kept) ------------- */
+  'whole eggs':        { unit:'piece', macros: N(72,  6.3,  0.4,  5.0) },   // USDA 172184 · 1 large (50 g)
+  'eggs':              { unit:'piece', macros: N(72,  6.3,  0.4,  5.0) },
+  'greek yogurt':      { unit:'g100',  macros: N(59,  10.3, 3.6,  0.4) },   // USDA 170888 non-fat plain
+  'greek yogut':       { unit:'g100',  macros: N(59,  10.3, 3.6,  0.4) },
+  'paneer':            { unit:'g100',  macros: N(265, 18.3, 1.2,  20.8) },  // IFCT-2017 D016
+  'panner':            { unit:'g100',  macros: N(265, 18.3, 1.2,  20.8) },
+  'tofu':              { unit:'g100',  macros: N(144, 15.8, 2.8,  8.7) },   // USDA 172476 firm — was mistakenly 76 (silken)
 
-  /* protein */
-  'chicken':           { unit:'g100',  macros: N(165, 31, 0, 3.6) },
-  'chicken breast':    { unit:'g100',  macros: N(165, 31, 0, 3.6) },
-  'grilled chicken':   { unit:'g100',  macros: N(165, 31, 0, 3.6) },
-  'soya chunks':       { unit:'cup_dry', macros: N(120, 18, 8, 1.5) },
-  'soya chuks':        { unit:'cup_dry', macros: N(120, 18, 8, 1.5) },
-  'protein powder':    { unit:'scoop', macros: N(120, 24, 3, 1.5) },
-  'protein shake':     { unit:'scoop', macros: N(120, 24, 3, 1.5) },
-  'falafel':           { unit:'piece', macros: N(50, 2, 5.5, 2.5) },
-  'falafel stuffings': { unit:'piece', macros: N(50, 2, 5.5, 2.5) },
-  'boiled egg':        { unit:'piece', macros: N(72, 6.3, 0.4, 5) },
+  /* ------------- protein ------------- */
+  'chicken':           { unit:'g100',  macros: N(165, 31,   0,    3.6) },   // USDA 171077 breast, cooked
+  'chicken breast':    { unit:'g100',  macros: N(165, 31,   0,    3.6) },
+  'grilled chicken':   { unit:'g100',  macros: N(165, 31,   0,    3.6) },
+  'dry chicken':       { unit:'g100',  macros: N(190, 29,   3,    7.0) },   // NIN — pan-tossed masala chicken
+  'fish fry':          { unit:'g100',  macros: N(200, 22,   4,    11) },    // NIN Indian shallow-fry preparation
+  'soya chunks':       { unit:'g100_dry', macros: N(345, 52, 33, 0.5) },    // IFCT-2017 K011 · defatted soya nuggets, dry
+  'soya chuks':        { unit:'g100_dry', macros: N(345, 52, 33, 0.5) },
+  'protein powder':    { unit:'scoop', macros: N(120, 24,   3,    1.5) },   // typical whey isolate scoop 30 g
+  'protein shake':     { unit:'scoop', macros: N(120, 24,   3,    1.5) },
+  'falafel':           { unit:'piece', macros: N(57,  2.3,  5.4,  3.0) },   // USDA 172480 · 17 g piece
+  'falafel stuffings': { unit:'piece', macros: N(57,  2.3,  5.4,  3.0) },
+  'boiled egg':        { unit:'piece', macros: N(78,  6.3,  0.6,  5.3) },   // USDA 172185 · 1 large
+  'white channa':      { unit:'g100_dry', macros: N(364, 19, 61,  6.0) },   // IFCT-2017 P016 kabuli chana, dry
+  'white channa curry':{ unit:'g100_dry', macros: N(364, 19, 61,  6.0) },   // dietitian gives dry weight
+  'green moong sprouts':{unit:'bowl', macros: N(120, 8.5,  22,   0.6) },    // USDA 168388 · ~150 g bowl
+  'moong sprouts':     { unit:'bowl',  macros: N(120, 8.5,  22,   0.6) },
+  'green mong':        { unit:'g100_dry', macros: N(347, 24, 59,  1.2) },   // IFCT-2017 P019 whole moong, dry
+  'green mong sprouts':{unit:'bowl', macros: N(120, 8.5,  22,   0.6) },
 
-  /* grains */
-  'idly':              { unit:'piece', macros: N(40, 1.5, 8, 0.2) },
-  'idli':              { unit:'piece', macros: N(40, 1.5, 8, 0.2) },
-  'pesarattu':         { unit:'piece', macros: N(150, 9, 22, 3) },
-  'all dals pesarattu':{ unit:'piece', macros: N(150, 9, 22, 3) },
-  'millet dosa':       { unit:'piece', macros: N(135, 4, 20, 4) },
-  'chapati':           { unit:'piece', macros: N(120, 4, 18, 3.5) },
-  'quinoa':            { unit:'cup_cooked', macros: N(220, 8, 39, 3.5) },
-  'quionoa':           { unit:'cup_cooked', macros: N(220, 8, 39, 3.5) },
-  'brown rice':        { unit:'cup_cooked', macros: N(216, 5, 45, 1.8) },
+  /* ------------- grains ------------- */
+  'idly':              { unit:'piece', macros: N(58,  1.8,  12,   0.2) },   // NIN standard medium idli (~50 g)
+  'idli':              { unit:'piece', macros: N(58,  1.8,  12,   0.2) },
+  'dosa':              { unit:'piece', macros: N(133, 2.7,  17.9, 5.7) },   // NIN plain dosa (60 g)
+  'pesarattu':         { unit:'piece', macros: N(148, 8.7,  21.5, 3.0) },   // NIN moong pesarattu (60 g)
+  'all dals pesarattu':{ unit:'piece', macros: N(148, 8.7,  21.5, 3.0) },
+  'millet dosa':       { unit:'piece', macros: N(135, 4.0,  20,   4.0) },   // NIN ragi/foxtail dosa
+  'chapati':           { unit:'piece', macros: N(104, 3.2,  17.6, 2.5) },   // IFCT-2017 whole wheat, ~35 g
+  'quinoa':            { unit:'cup_cooked', macros: N(222, 8.1, 39.4, 3.6) }, // USDA 168917 · 1 cup cooked
+  'quionoa':           { unit:'cup_cooked', macros: N(222, 8.1, 39.4, 3.6) },
+  'brown rice':        { unit:'cup_cooked', macros: N(216, 5.0, 45,  1.8) }, // USDA 169705 · 1 cup cooked
+  'rice':              { unit:'cup_cooked', macros: N(206, 4.3, 45,  0.4) }, // USDA white 168878 · 1 cup cooked
+  'whole wheat bread': { unit:'slice', macros: N(69,  3.6,  11.6, 1.1) },   // USDA 172688 · 1 slice
+  'bread':             { unit:'slice', macros: N(69,  3.6,  11.6, 1.1) },
+  'whole wheat pasta (white sauce)':{ unit:'g100_dry', macros: N(348, 14, 71, 2.5) }, // USDA 168907 dry · white sauce added below
+  'whole wheat pasta': { unit:'g100_dry', macros: N(348, 14,  71,  2.5) },
+  'adai':              { unit:'piece', macros: N(180, 9.0,  24,   5.0) },   // NIN mixed-dal adai
 
-  /* mixed dishes */
-  'mixed veg sambar':  { unit:'bowl',  macros: N(140, 7, 22, 3) },
-  'soup':              { unit:'bowl',  macros: N(90, 4, 12, 2.5) },
-  'salad':             { unit:'bowl',  macros: N(60, 2, 10, 1.5) },
-  'veg salad':         { unit:'bowl',  macros: N(60, 2, 10, 1.5) },
-  'veggies salad':     { unit:'bowl',  macros: N(60, 2, 10, 1.5) },
-  'ridge gourd chutney':{ unit:'tbsp', macros: N(20, 0.5, 2, 1) },
-  'any vegetable chutney':{ unit:'tbsp', macros: N(25, 0.7, 2, 1.5) },
-  'vegetable chutney': { unit:'tbsp',  macros: N(25, 0.7, 2, 1.5) },
-  'veg chutney':       { unit:'tbsp',  macros: N(25, 0.7, 2, 1.5) },
-  'egg chapati roll':  { unit:'piece', macros: N(280, 14, 22, 14) },
+  /* ------------- Indian mains & sides ------------- */
+  'mixed veg sambar':  { unit:'bowl',  macros: N(140, 7.0,  22,   3.0) },
+  'sambar':            { unit:'bowl',  macros: N(140, 7.0,  22,   3.0) },
+  'spinach dal':       { unit:'bowl',  macros: N(150, 9.0,  20,   3.5) },   // NIN palak dal 1 katori
+  'dal':               { unit:'bowl',  macros: N(140, 8.5,  20,   3.0) },
+  'soup':              { unit:'bowl',  macros: N(80,  3.5,  11,   2.0) },
+  'salad':             { unit:'bowl',  macros: N(50,  2.0,  9,    1.0) },
+  'veg salad':         { unit:'bowl',  macros: N(50,  2.0,  9,    1.0) },
+  'veggies salad':     { unit:'bowl',  macros: N(50,  2.0,  9,    1.0) },
+  'vegetable salad':   { unit:'bowl',  macros: N(50,  2.0,  9,    1.0) },
+  'mixed vegetable salad':{ unit:'bowl', macros: N(50, 2.0, 9,    1.0) },
+  'cucumber, carrot & tomato salad':{ unit:'bowl', macros: N(45, 1.8, 9, 0.5) },
+  'lettuce + onion + tomato + corn':{ unit:'bowl', macros: N(85, 3.0, 17, 1.2) },
+  'ridge gourd chutney':{ unit:'tbsp', macros: N(18,  0.5,  2.0,  1.0) },
+  'bottle gourd chutney':{unit:'tbsp', macros: N(18,  0.5,  2.0,  1.0) },
+  'any vegetable chutney':{ unit:'tbsp', macros: N(22, 0.7, 2.0,  1.5) },
+  'vegetable chutney': { unit:'tbsp',  macros: N(22,  0.7,  2.0,  1.5) },
+  'veg chutney':       { unit:'tbsp',  macros: N(22,  0.7,  2.0,  1.5) },
+  'coconut chutney':   { unit:'tbsp',  macros: N(38,  0.6,  1.2,  3.6) },   // NIN standard
+  'peanut chutney':    { unit:'tbsp',  macros: N(50,  2.2,  1.8,  4.1) },   // NIN
+  'egg chapati roll':  { unit:'piece', macros: N(280, 14,   22,   14) },
+  'ladies finger poriyal':{ unit:'bowl', macros: N(95,  3,  12,   4.5) },   // NIN ½ cup okra stir-fry
+  'carrot & beans poriyal':{unit:'bowl', macros: N(90,  3,  13,   3.0) },
+  'mixed vegetable poriyal':{unit:'bowl', macros: N(90,  3,  12,   4.0) },
+  'vegetable poriyal': { unit:'bowl',   macros: N(90,   3,  12,   4.0) },
+  'cabbage / cauliflower poriyal':{unit:'bowl', macros: N(85, 3,  11,   3.5) },
 
-  /* misc */
-  'cinnamon':          { unit:'tsp',   macros: N(6, 0.1, 2, 0) },
-  'cinamon':           { unit:'tsp',   macros: N(6, 0.1, 2, 0) },
+  /* ------------- misc ------------- */
+  'cinnamon':          { unit:'tsp',   macros: N(6,   0.1,  2,    0) },     // USDA 171320
+  'cinamon':           { unit:'tsp',   macros: N(6,   0.1,  2,    0) },
+  'cashew':            { unit:'g100',  macros: N(553, 18,   30,   44) },    // USDA 170162
+  'cashews':           { unit:'g100',  macros: N(553, 18,   30,   44) },
+  'cashews (for sauce)':{unit:'g100',  macros: N(553, 18,   30,   44) },
+  'broccoli & bell peppers':{ unit:'bowl', macros: N(75, 4.5, 12, 1.2) },   // USDA broccoli + peppers ~150 g
+  'broccoli':          { unit:'bowl',  macros: N(55,  4.0,  11,   0.6) },
+  'bell peppers':      { unit:'bowl',  macros: N(45,  1.5,  10,   0.4) },
 
-  /* week-3 additions */
-  'stir-fried vegetables':{ unit:'bowl', macros: N(120, 4, 14, 6) },
-  'vegetable stir fry':{ unit:'bowl',  macros: N(120, 4, 14, 6) },
-  'rajma curry':       { unit:'bowl',  macros: N(180, 9, 28, 4) },
-  'paneer bhurji':     { unit:'g100',  macros: N(220, 16, 4, 16) },
-  'roasted chana':     { unit:'g100',  macros: N(370, 22, 55, 5) },
-  'buttermilk':        { unit:'bowl',  macros: N(40, 3, 5, 1) },
-  'fish curry':        { unit:'bowl',  macros: N(220, 22, 6, 12) },
-  'chicken curry':     { unit:'bowl',  macros: N(240, 22, 6, 14) },
+  /* ------------- prepared / composite dishes (per bowl) ------------- */
+  'stir-fried vegetables':{ unit:'bowl', macros: N(120, 4,  14,   6) },
+  'stir-fried vegetable':{ unit:'bowl',  macros: N(120, 4,  14,   6) },
+  'vegetable stir fry':{ unit:'bowl',  macros: N(120, 4,   14,   6) },
+  'rajma curry':       { unit:'bowl',  macros: N(180, 9,   28,   4) },
+  'paneer bhurji':     { unit:'g100',  macros: N(305, 20,  4,    23) },     // NIN — updated (was 220)
+  'paneer curry':      { unit:'g100',  macros: N(290, 18,  4,    22) },
+  'roasted chana':     { unit:'g100',  macros: N(368, 22,  55,   5) },      // USDA 171288 dry roasted
+  'roasted black channa':{ unit:'g100', macros: N(368, 22, 55,   5) },
+  'buttermilk':        { unit:'bowl',  macros: N(40,  3,   5,    1) },
+  'fish curry':        { unit:'bowl',  macros: N(220, 22,  6,    12) },
+  'chicken curry':     { unit:'bowl',  macros: N(240, 22,  6,    14) },
   'fish curry or chicken curry':{ unit:'bowl', macros: N(230, 22, 6, 13) },
-  'soya chunks pulao': { unit:'bowl',  macros: N(280, 16, 38, 7) },
-  'vegetable raita':   { unit:'bowl',  macros: N(90, 6, 8, 3) },
+  'soya chunks pulao': { unit:'bowl',  macros: N(280, 16,  38,   7) },
+  'mixed veg pulao':   { unit:'bowl',  macros: N(260, 6,   42,   8) },      // NIN 1 cup veg pulao
+  'veg pulao':         { unit:'bowl',  macros: N(260, 6,   42,   8) },
+  'sambar rice with veggies':{ unit:'bowl', macros: N(240, 8, 42, 5) },     // NIN 1 bowl
+  'sambar rice with veggies (carrot, brinjal, radish, ash gourd, drumstick)':{unit:'bowl',macros:N(240,8,42,5)},
+  'vegetable raita':   { unit:'bowl',  macros: N(90,  6,   8,    3) },
   'vegetable raita (with greek yogut)':{ unit:'bowl', macros: N(90, 6, 8, 3) },
-  'adai':              { unit:'piece', macros: N(180, 9, 24, 5) },
-  'mixed veg curry':   { unit:'bowl',  macros: N(150, 4, 18, 7) },
-  'peanut chutney':    { unit:'tbsp',  macros: N(45, 2, 2, 3.5) },
-  'roasted peanuts':   { unit:'tbsp',  macros: N(80, 3.5, 3, 7) },
-  'veggies':           { unit:'bowl',  macros: N(80, 3, 14, 1.5) },
-  'corn & vegetable salad':{ unit:'bowl', macros: N(140, 5, 24, 2) },
+  'mixed veg curry':   { unit:'bowl',  macros: N(150, 4,   18,   7) },
+  'mixed vegetable curry':{ unit:'bowl', macros: N(150, 4, 18,   7) },
+  'mixed vegetable sabzi':{ unit:'bowl', macros: N(150, 4, 18,   7) },
+  'mixed veg sabzi':   { unit:'bowl',  macros: N(150, 4,   18,   7) },
+  'mixed veggies bowl with crunchy peanuts':{unit:'bowl', macros: N(200, 8, 18, 11) },
+  'roasted peanuts':   { unit:'tbsp',  macros: N(53,  2.4, 1.5,  4.6) },
+  'veggies':           { unit:'bowl',  macros: N(80,  3,   14,   1.5) },
+  'stir-fried veggies':{ unit:'bowl',  macros: N(120, 4,   14,   6) },
+  'corn & vegetable salad':{ unit:'bowl', macros: N(140, 5, 24,  2) },
   'corn and vegetable salad':{ unit:'bowl', macros: N(140, 5, 24, 2) },
-  'vegetable soup':    { unit:'bowl',  macros: N(90, 4, 12, 2.5) },
-  'soup — tomato or mushroom':{ unit:'bowl', macros: N(90, 4, 12, 2.5) },
-  'tomato soup':       { unit:'bowl',  macros: N(90, 4, 12, 2.5) },
-  'mushroom soup':     { unit:'bowl',  macros: N(90, 4, 12, 2.5) }
+  'vegetable soup':    { unit:'bowl',  macros: N(80,  3.5, 11,   2.0) },
+  'mixed vegetable soup':{ unit:'bowl', macros: N(80,  3.5, 11,   2.0) },
+  'soup — tomato or mushroom':{ unit:'bowl', macros: N(80, 3.5, 11, 2.0) },
+  'tomato soup':       { unit:'bowl',  macros: N(75,  2.5, 12,   1.5) },
+  'mushroom soup':     { unit:'bowl',  macros: N(85,  4.0, 10,   3.0) },
+  'paneer paratha':    { unit:'piece', macros: N(260, 10,  25,   13) },     // NIN 1 stuffed paratha
+  'paneer bread toast':{ unit:'g100',  macros: N(280, 15,  22,   14) },     // paneer + toast per 100 g preparation
+  'egg omelette with colourfull bell peppers':{unit:'piece',macros:N(90,6.3,1.5,6.5)},
+  'egg omelette':      { unit:'piece', macros: N(90,  6.3, 1.5,  6.5) },
+  'egg sandwich':      { unit:'piece', macros: N(220, 12,  25,   9) },      // 1 sandwich (1 egg + 2 slices) — dietitian says "3 Egg Sandwich" (3 eggs)
+  'overnight chia pudding':{ unit:'bowl', macros: N(220, 7, 30, 8) },       // 30 g oats + 1 tbsp chia + yogurt
+  'chia pudding':      { unit:'bowl',  macros: N(220, 7,   30,   8) },
+  'soya chunks bhurji':{ unit:'g100_dry', macros: N(345, 52, 33,  0.5) },   // dry weight — same as soya chunks
+  'green mong stuffings':{unit:'g100_dry', macros: N(347, 24, 59, 1.2) }
 };
 
 function lookupFood(name){
@@ -2512,10 +2579,20 @@ function lookupFood(name){
 function parseMultiplier(qStr, unit){
   if (!qStr) return 1;
   const s = String(qStr).toLowerCase().trim();
-  // grams
+  // grams — only meaningful for gram-based units. For other units (scoop, piece,
+  // bowl, cup_dry) grams don't map to the base portion, so fall through to
+  // unit-specific logic instead of silently dividing by 100.
   let m = s.match(/(\d+(?:\.\d+)?)\s*g\b/);
-  if (m && unit === 'g100') return parseFloat(m[1]) / 100;
-  if (m) return parseFloat(m[1]) / 100;  // fallback
+  if (m){
+    if (unit === 'g100')     return parseFloat(m[1]) / 100;
+    if (unit === 'g100_dry') return parseFloat(m[1]) / 100;
+  }
+  // per-100g dry weight (legumes / soya chunks / channa)
+  if (unit === 'g100_dry'){
+    if (/½|1\/2|half/.test(s)) return 0.30;      // 30 g dry ≈ ½ cup
+    m = s.match(/(\d+(?:\.\d+)?)\s*cup/);
+    return m ? parseFloat(m[1]) * 0.60 : 0.30;   // 60 g dry ≈ 1 cup
+  }
   // tbsp / tsp
   if (unit === 'tbsp'){
     m = s.match(/(\d+(?:\.\d+)?)\s*tbsp/);
